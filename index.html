@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auralis - Luxury Music Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .waveform-bar {
+            animation: waveform 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes waveform {
+            0%, 100% { height: 0.5rem; }
+            50% { height: 2rem; }
+        }
+        
+        .waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+        .waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+        .waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+        .waveform-bar:nth-child(5) { animation-delay: 0.4s; }
+        .waveform-bar:nth-child(6) { animation-delay: 0.5s; }
+        .waveform-bar:nth-child(7) { animation-delay: 0.6s; }
+        .waveform-bar:nth-child(8) { animation-delay: 0.7s; }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        
+        .volume-bar {
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+        
+        .light-theme {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1f2937;
+        }
+        
+        .dark-theme {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+        }
+        
+        .song-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(251, 191, 36, 0.3);
+        }
+        
+        .control-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .control-button:active {
+            transform: scale(0.95);
+        }
+        
+        .landing-fade {
+            animation: fadeIn 1s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s ease-out infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="theme-transition dark-theme min-h-screen">
+    <!-- Landing Screen -->
+    <div id="landingScreen" class="fixed inset-0 z-50 flex items-center justify-center landing-fade">
+        <div class="text-center">
+            <div class="relative mb-8">
+                <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center mb-4">
+                    <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    </svg>
+                </div>
+                <div class="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 opacity-30 pulse-ring"></div>
+            </div>
+            <h1 class="text-5xl font-bold gradient-text mb-4">Auralis</h1>
+            <p class="text-xl text-gray-300 mb-8">Luxury Music Experience</p>
+            <button id="enterApp" class="px-8 py-3 bg-gradient-to-r from-amber-400 to-amber-600 text-white rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                Enter Experience
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden min-h-screen p-4">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <header class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold gradient-text">Auralis</h1>
+                </div>
+                
+                <button id="themeToggle" class="p-2 rounded-full glass-effect hover:bg-white/20 transition-all duration-300">
+                    <svg id="sunIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6zm0-10c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z"/>
+                        <path d="M12 2l1.4 1.4L12 4.8 10.6 3.4 12 2zM2 12l1.4-1.4L4.8 12l-1.4 1.4L2 12zM19.2 12l1.4 1.4L22 12l-1.4-1.4L19.2 12zM12 19.2l1.4 1.4L12 22l-1.4-1.4L12 19.2z"/>
+                    </svg>
+                    <svg id="moonIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Music Player -->
+                <div class="lg:col-span-2">
+                    <div class="glass-effect rounded-2xl p-8 theme-transition">
+                        <!-- Album Art and Info -->
+                        <div class="flex flex-col md:flex-row items-center mb-8">
+                            <div class="relative mb-6 md:mb-0 md:mr-8">
+                                <img id="albumArt" class="w-48 h-48 rounded-2xl shadow-2xl" 
+                                     src="https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop" 
+                                     alt="Album Art">
+                                <div class="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 to-transparent"></div>
+                            </div>
+                            
+                            <div class="text-center md:text-left">
+                                <h2 id="songTitle" class="text-3xl font-bold mb-2">Midnight Dreams</h2>
+                                <p id="artistName" class="text-xl text-gray-400 mb-4">Luna Eclipse</p>
+                                
+                                <!-- Waveform Animation -->
+                                <div id="waveform" class="flex items-center justify-center md:justify-start space-x-1 mb-6 hidden">
+                                    <div class="waveform-bar w-1 bg-amber-400 rounded-full"></div>
+                                    <div class="waveform-bar w-1 bg-amber-400 rounded-full"></div>
+                                    <div class="waveform-bar w-1 bg-amber-400 rounded-full"></div>
+                                    <div class="waveform-bar w-1 bg-amber-400 rounded-full"></div>
+                                    <div class="waveform-bar w-1 bg-amber-400 rounded-full"></div>
+                                    <div class="waveform-bar w-1 bg-amber-400 rounded-full"></div>
+                                    <div class="waveform-bar w-1 bg-amber-400 rounded-full"></div>
+                                    <div class="waveform-bar w-1 bg-amber-400 rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controls -->
+                        <div class="space-y-6">
+                            <!-- Progress Bar -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm text-gray-400">
+                                    <span id="currentTime">0:00</span>
+                                    <span id="totalTime">3:24</span>
+                                </div>
+                                <div class="relative">
+                                    <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                                        <div id="progressBar" class="h-full progress-bar transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                    <input id="progressSlider" type="range" min="0" max="100" value="0" 
+                                           class="absolute inset-0 w-full h-2 opacity-0 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <!-- Playback Controls -->
+                            <div class="flex items-center justify-center space-x-6">
+                                <button id="prevBtn" class="control-button p-3 rounded-full glass-effect hover:bg-white/20 transition-all duration-300">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                                    </svg>
+                                </button>
+                                
+                                <button id="playPauseBtn" class="control-button p-4 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-white hover:shadow-lg transition-all duration-300">
+                                    <svg id="playIcon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                    <svg id="pauseIcon" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                                    </svg>
+                                </button>
+                                
+                                <button id="nextBtn" class="control-button p-3 rounded-full glass-effect hover:bg-white/20 transition-all duration-300">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Volume Control -->
+                            <div class="flex items-center space-x-4">
+                                <button id="volumeBtn" class="p-2 rounded-full glass-effect hover:bg-white/20 transition-all duration-300">
+                                    <svg id="volumeIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                                    </svg>
+                                    <svg id="muteIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                                    </svg>
+                                </button>
+                                <div class="flex-1 relative">
+                                    <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                                        <div id="volumeBar" class="h-full volume-bar transition-all duration-300" style="width: 80%"></div>
+                                    </div>
+                                    <input id="volumeSlider" type="range" min="0" max="100" value="80" 
+                                           class="absolute inset-0 w-full h-2 opacity-0 cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Playlist -->
+                <div class="lg:col-span-1">
+                    <div class="glass-effect rounded-2xl p-6 theme-transition">
+                        <h3 class="text-xl font-bold mb-6 gradient-text">Now Playing</h3>
+                        <div id="playlist" class="space-y-3">
+                            <!-- Songs will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
