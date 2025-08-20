@@ -1,0 +1,6 @@
+#Ignoring the environment variables
+.env
+
+#Ignoring the node_modules
+node_modules/
+package-lock.json
