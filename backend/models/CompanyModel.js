@@ -1,11 +1,18 @@
 const mongoose = require("mongoose")
 
 const CompanySchema = new mongoose.Schema({
-        name: {
-                type: String, 
-                required: true 
+        id: {
+                type: String,
+                required: true,
+                unique: true,
+                default: () => new mongoose.Types.ObjectId().toHexString(),
+                immutable: true
         },
-        location: {
+        name: { 
+                type: String,
+                required: true
+        },
+        location: { 
                 type: String,
                 required: true
         },
@@ -17,9 +24,7 @@ const CompanySchema = new mongoose.Schema({
                 type: Number,
                 required: true
         }
-}, { 
-        timestamps: true 
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("Company", CompanySchema);
 
