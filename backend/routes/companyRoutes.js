@@ -8,8 +8,4 @@ router.post("/addCompany",companyController.addCompany);
 
 
 
-
-
-
-
 module.exports = router;

@@ -25,5 +25,6 @@ const addCompany = async(req,res) => {
 }
 
 module.exports = {
-        getAll
+        getAll,
+        addCompany
 }
