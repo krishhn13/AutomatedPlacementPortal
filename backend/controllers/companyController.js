@@ -16,7 +16,7 @@ const addCompany = async(req,res) => {
                 const existing = await companyModel.findOne({ name });
                 if (existing) return res.status(409).json({ message: "Company already exists" });
 
-                const company = new companyModel({ name });
+                const company = new companyModel(req.body);
                 const saved = await company.save();
                 return res.status(201).json({ data: saved });
         } catch(err) {
