@@ -25,7 +25,7 @@ const company = require("./routes/companyRoutes")
 
 
 //using the routes
-app.use(express.json());   // parses application/json
+app.use(express.json());  
 app.use(express.urlencoded({ extended: true }));
 app.use('/api',company); 
 
