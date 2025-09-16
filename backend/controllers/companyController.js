@@ -23,8 +23,19 @@ const addCompany = async(req,res) => {
                 res.status(500).json({message:err.message})
         }
 }
+const getByName = async (req, res) => {
+        try {
+                const { name } = req.params;
+                const isThere = await companyModel.findOne({ name });
+                if (!isThere) return res.status(404).json({ message: "COMPANY NOT FOUND" });
+                return res.status(200).json({ data: isThere });
+        } catch (err) {
+                res.status(500).json({message : err.message});
+        } 
+}
 
 module.exports = {
         getAll,
+        getByName,
         addCompany
 }
