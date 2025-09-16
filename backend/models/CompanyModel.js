@@ -1,16 +1,9 @@
 const mongoose = require("mongoose")
 
 const CompanySchema = new mongoose.Schema({
-        id: {
-                type: String,
-                required: true,
-                unique: true,
-                default: () => new mongoose.Types.ObjectId().toHexString(),
-                immutable: true
-        },
         name: { 
                 type: String,
-                required: true
+                // required: true
         },
         location: { 
                 type: String,
