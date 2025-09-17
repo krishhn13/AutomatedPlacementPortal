@@ -8,5 +8,4 @@ router.post("/addCompany",companyController.addCompany);
 router.put("/updateCompany/:name",companyController.updateCompany);
 router.delete("/deleteCompany/:name",companyController.deleteCompany);
 
-
 module.exports = router;
