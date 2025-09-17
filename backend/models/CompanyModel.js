@@ -10,12 +10,12 @@ const CompanySchema = new mongoose.Schema({
                 required: true
         },
         positions: {
-                type: [String],
+                type: {String:String},
                 required: true
         },
-        salary: {
-                type: Number,
-                required: true
+        eligibilityCriteria : {
+                type : [String],
+                required : true
         }
 }, { timestamps: true });
 
