@@ -6,6 +6,7 @@ const app = express();
 const PORT = process.env.PORT;
 const MONGODB_URI = process.env.MONGODB_URI;
 
+
 // Connect to MongoDB
 mongoose.connect(MONGODB_URI)
 .then(() => {
@@ -13,6 +14,15 @@ mongoose.connect(MONGODB_URI)
 }).catch((err) => {
         console.error("Failed to connect to MongoDB:", err);
 });
+
+
+
+
+// middlewares
+
+
+
+
 
 
 // importing the files
