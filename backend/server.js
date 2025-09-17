@@ -19,7 +19,11 @@ mongoose.connect(MONGODB_URI)
 
 
 // middlewares
+const morgan = require('morgan');
+const cors = require('cors');
 
+app.use(morgan('tiny'));
+app.use(cors());
 
 
 
