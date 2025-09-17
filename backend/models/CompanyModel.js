@@ -10,7 +10,7 @@ const CompanySchema = new mongoose.Schema({
                 required: true
         },
         positions: {
-                type: {String:String},
+                type: [{String:String}],
                 required: true
         },
         eligibilityCriteria : {
