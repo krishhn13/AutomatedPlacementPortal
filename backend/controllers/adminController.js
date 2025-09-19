@@ -12,3 +12,9 @@ const getStudents = async(req , res) => {
                 })
         }
 }
+
+
+
+module.exports = {
+        getStudents
+}
