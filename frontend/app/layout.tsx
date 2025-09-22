@@ -2,20 +2,14 @@ import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
-import { Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { ThemeProvider } from "next-themes"
 import { Suspense } from "react"
 import "./globals.css"
 
-const playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair-display",
-  display: "swap",
-})
-
 export const metadata: Metadata = {
-  title: "PlacementPortal - Your Gateway to Career Success",
-  description: "Connect students with top companies through our comprehensive placement management system",
+  title: "PlacementPro - Automated Placement Portal",
+  description: "Premium placement portal for students, companies, and administrators",
   generator: "v0.app",
 }
 
@@ -25,9 +19,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} ${playfairDisplay.variable}`}>
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange={false}>
+          <Suspense fallback={null}>{children}</Suspense>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

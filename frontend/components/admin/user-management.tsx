@@ -1,210 +1,411 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Building2, Search, Calendar, Star, ToggleLeft, ToggleRight } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Search, Filter, MoreHorizontal, Users, Building2, Shield, Edit, Trash2, Ban } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-interface AdminUser {
-  id: string
-  name: string
-  email: string
-  role: "student" | "company" | "admin"
-  rollNo?: string
-  branch?: string
-  cgpa?: number
-  contactPerson?: string
-  isApproved?: boolean
-  registeredDate: string
-  status: "active" | "inactive"
-}
+const students = [
+  {
+    id: 1,
+    name: "Alex Smith",
+    email: "alex.smith@university.edu",
+    branch: "Computer Science",
+    year: "Final Year",
+    cgpa: "8.7/10",
+    status: "active",
+    joinDate: "2024-09-01",
+    applications: 5,
+    avatar: "/student-profile.png",
+  },
+  {
+    id: 2,
+    name: "Sarah Johnson",
+    email: "sarah.j@college.edu",
+    branch: "Electronics",
+    year: "Third Year",
+    cgpa: "9.1/10",
+    status: "active",
+    joinDate: "2024-09-15",
+    applications: 3,
+    avatar: "/diverse-student-profiles.png",
+  },
+  {
+    id: 3,
+    name: "Michael Chen",
+    email: "m.chen@university.edu",
+    branch: "Mechanical",
+    year: "Final Year",
+    cgpa: "8.9/10",
+    status: "suspended",
+    joinDate: "2024-08-20",
+    applications: 0,
+    avatar: "/student-profile.png",
+  },
+]
 
-interface UserManagementProps {
-  users: AdminUser[]
-  onToggleStatus: (userId: string) => void
-}
+const companies = [
+  {
+    id: 1,
+    name: "TechCorp Inc.",
+    email: "hr@techcorp.com",
+    industry: "Technology",
+    location: "San Francisco, CA",
+    status: "active",
+    joinDate: "2024-10-01",
+    jobPostings: 12,
+    logo: "/abstract-tech-logo.png",
+  },
+  {
+    id: 2,
+    name: "StartupXYZ",
+    email: "careers@startupxyz.com",
+    industry: "Software",
+    location: "Austin, TX",
+    status: "active",
+    joinDate: "2024-10-15",
+    jobPostings: 8,
+    logo: "/abstract-startup-logo.png",
+  },
+]
 
-export function UserManagement({ users, onToggleStatus }: UserManagementProps) {
+const admins = [
+  {
+    id: 1,
+    name: "Admin User",
+    email: "admin@placementpro.com",
+    role: "Super Admin",
+    status: "active",
+    joinDate: "2024-01-01",
+    lastLogin: "2024-11-30",
+    avatar: "/admin-avatar.png",
+  },
+  {
+    id: 2,
+    name: "John Manager",
+    email: "john.manager@placementpro.com",
+    role: "Manager",
+    status: "active",
+    joinDate: "2024-03-15",
+    lastLogin: "2024-11-29",
+    avatar: "/admin-avatar.png",
+  },
+]
+
+export function UserManagement() {
+  const [activeTab, setActiveTab] = useState("students")
   const [searchTerm, setSearchTerm] = useState("")
-  const [roleFilter, setRoleFilter] = useState<string>("all")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRole = roleFilter === "all" || user.role === roleFilter
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter
-
-    return matchesSearch && matchesRole && matchesStatus
-  })
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "student":
-        return <Building2 className="h-4 w-4" />
-      case "company":
-        return <Building2 className="h-4 w-4" />
-      default:
-        return <Building2 className="h-4 w-4" />
-    }
-  }
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "student":
-        return "bg-blue-100 text-blue-800"
-      case "company":
-        return "bg-purple-100 text-purple-800"
-      case "admin":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+  const [statusFilter, setStatusFilter] = useState("all")
 
   const getStatusColor = (status: string) => {
-    return status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+    switch (status) {
+      case "active":
+        return "bg-accent/10 text-accent border-accent/20"
+      case "suspended":
+        return "bg-destructive/10 text-destructive border-destructive/20"
+      case "pending":
+        return "bg-amber-500/10 text-amber-600 border-amber-500/20"
+      default:
+        return "bg-muted/10 text-muted-foreground border-muted/20"
+    }
+  }
+
+  const handleUserAction = (action: string, userId: number, userType: string) => {
+    console.log(`${action} ${userType} with id: ${userId}`)
+    // Handle user actions
   }
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card className="border-primary-200">
-        <CardHeader>
-          <CardTitle className="text-lg font-serif text-primary-900">Filter Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="Search by name or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-primary-200"
-                />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="glass-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                <p className="text-2xl font-bold">{students.length}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-primary/10">
+                <Users className="w-6 h-6 text-primary" />
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Roles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="student">Students</SelectItem>
-                  <SelectItem value="company">Companies</SelectItem>
-                  <SelectItem value="admin">Admins</SelectItem>
-                </SelectContent>
-              </Select>
+        <Card className="glass-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Companies</p>
+                <p className="text-2xl font-bold">{companies.length}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-secondary/10">
+                <Building2 className="w-6 h-6 text-secondary" />
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+        <Card className="glass-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Admin Users</p>
+                <p className="text-2xl font-bold">{admins.length}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-accent/10">
+                <Shield className="w-6 h-6 text-accent" />
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Users List */}
-      <div className="grid gap-4">
-        {filteredUsers.length === 0 ? (
-          <Card className="border-primary-200">
-            <CardContent className="p-8 text-center">
-              <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredUsers.map((user) => (
-            <Card key={user.id} className="border-primary-200">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 glass"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-48 glass">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent className="glass-card">
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="glass">
+          <TabsTrigger
+            value="students"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Students ({students.length})
+          </TabsTrigger>
+          <TabsTrigger
+            value="companies"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Building2 className="w-4 h-4 mr-2" />
+            Companies ({companies.length})
+          </TabsTrigger>
+          <TabsTrigger
+            value="admins"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Admins ({admins.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="students" className="space-y-4">
+          {students.map((student) => (
+            <Card key={student.id} className="glass-card">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-primary-50 rounded-full">{getRoleIcon(user.role)}</div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-serif font-semibold text-primary-900">{user.name}</h3>
-                        <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
-                        <Badge className={getStatusColor(user.status)}>{user.status}</Badge>
-                      </div>
-
-                      <p className="text-sm text-text-default">{user.email}</p>
-
-                      <div className="flex items-center gap-4 text-xs text-text-default">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>Joined: {new Date(user.registeredDate).toLocaleDateString()}</span>
-                        </div>
-
-                        {user.role === "student" && user.rollNo && (
-                          <>
-                            <span>Roll: {user.rollNo}</span>
-                            <span>Branch: {user.branch}</span>
-                            {user.cgpa && (
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3 w-3 text-yellow-500" />
-                                <span>CGPA: {user.cgpa}</span>
-                              </div>
-                            )}
-                          </>
-                        )}
-
-                        {user.role === "company" && user.contactPerson && <span>Contact: {user.contactPerson}</span>}
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={student.avatar || "/placeholder.svg"} alt={student.name} />
+                      <AvatarFallback>
+                        {student.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">{student.name}</h3>
+                      <p className="text-sm text-muted-foreground">{student.email}</p>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm">{student.branch}</span>
+                        <span className="text-sm">{student.year}</span>
+                        <Badge variant="outline" className="bg-accent/10 text-accent">
+                          CGPA: {student.cgpa}
+                        </Badge>
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onToggleStatus(user.id)}
-                      className={
-                        user.status === "active"
-                          ? "border-red-200 text-red-700 hover:bg-red-50"
-                          : "border-green-200 text-green-700 hover:bg-green-50"
-                      }
-                    >
-                      {user.status === "active" ? (
-                        <>
-                          <ToggleRight className="mr-2 h-4 w-4" />
-                          Deactivate
-                        </>
-                      ) : (
-                        <>
-                          <ToggleLeft className="mr-2 h-4 w-4" />
-                          Activate
-                        </>
-                      )}
-                    </Button>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={getStatusColor(student.status)}>{student.status}</Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="glass-card" align="end">
+                        <DropdownMenuItem onClick={() => handleUserAction("view", student.id, "student")}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleUserAction("suspend", student.id, "student")}>
+                          <Ban className="mr-2 h-4 w-4" />
+                          Suspend User
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleUserAction("delete", student.id, "student")}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/50">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Applications</p>
+                    <p className="font-semibold">{student.applications}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Join Date</p>
+                    <p className="font-semibold">{new Date(student.joinDate).toLocaleDateString()}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="companies" className="space-y-4">
+          {companies.map((company) => (
+            <Card key={company.id} className="glass-card">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                      <Building2 className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{company.name}</h3>
+                      <p className="text-sm text-muted-foreground">{company.email}</p>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm">{company.industry}</span>
+                        <span className="text-sm">{company.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={getStatusColor(company.status)}>{company.status}</Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="glass-card" align="end">
+                        <DropdownMenuItem onClick={() => handleUserAction("view", company.id, "company")}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleUserAction("suspend", company.id, "company")}>
+                          <Ban className="mr-2 h-4 w-4" />
+                          Suspend Company
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleUserAction("delete", company.id, "company")}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Company
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/50">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Job Postings</p>
+                    <p className="font-semibold">{company.jobPostings}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Join Date</p>
+                    <p className="font-semibold">{new Date(company.joinDate).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="admins" className="space-y-4">
+          {admins.map((admin) => (
+            <Card key={admin.id} className="glass-card">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={admin.avatar || "/placeholder.svg"} alt={admin.name} />
+                      <AvatarFallback>
+                        {admin.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">{admin.name}</h3>
+                      <p className="text-sm text-muted-foreground">{admin.email}</p>
+                      <Badge variant="outline" className="mt-1">
+                        {admin.role}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={getStatusColor(admin.status)}>{admin.status}</Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="glass-card" align="end">
+                        <DropdownMenuItem onClick={() => handleUserAction("edit", admin.id, "admin")}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Admin
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleUserAction("permissions", admin.id, "admin")}>
+                          <Shield className="mr-2 h-4 w-4" />
+                          Manage Permissions
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border/50">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Last Login</p>
+                    <p className="font-semibold">{new Date(admin.lastLogin).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Join Date</p>
+                    <p className="font-semibold">{new Date(admin.joinDate).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
