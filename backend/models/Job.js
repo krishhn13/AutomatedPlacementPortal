@@ -5,5 +5,17 @@ const Job = new mongoose.Schema({
                 type : String,
                 required : true
         },
+        package : {
+                type : String,
+                required : true
+        },
+        internship : {
+                type : Boolean,
+                required : true
+        },
+        internshipDuration : {
+                type : String,
+                required : true
+        }
         
 })
