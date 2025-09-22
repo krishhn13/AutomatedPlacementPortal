@@ -19,6 +19,8 @@ const Job = new mongoose.Schema({
         },
         stipend : {
                 type : Number
-        }
-        
+        }        
 })
+
+
+module.exports = mongoose.model("Jobs",job)
