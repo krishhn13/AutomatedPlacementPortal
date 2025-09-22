@@ -25,11 +25,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+
+// importing routes
 const companyRoutes = require("./routes/companyRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
+
+
+
+
+
+
+// using routes
 app.use('/api', authRoutes);
 app.use('/api', studentRoutes);
 app.use('/api', companyRoutes);
