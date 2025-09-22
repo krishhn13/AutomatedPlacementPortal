@@ -1,3 +1,4 @@
+// importing requirements
 require('dotenv').config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -8,6 +9,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
+
+
+// Connecting MONGO_DB
 mongoose.connect(MONGODB_URI)
     .then(() => console.log("Connected to MongoDB"))
     .catch((err) => console.error("Failed to connect to MongoDB:", err));
