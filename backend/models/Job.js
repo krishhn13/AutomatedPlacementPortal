@@ -16,6 +16,9 @@ const Job = new mongoose.Schema({
         internshipDuration : {
                 type : String,
                 required : true
+        },
+        stipend : {
+                type : Number
         }
         
 })
