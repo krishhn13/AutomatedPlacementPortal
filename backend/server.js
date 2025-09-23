@@ -33,7 +33,10 @@ const studentRoutes = require("./routes/studentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
-
+// test route
+app.get("/api/data",(req,res)=>{
+    res.json({message : "Hello from backend"})
+})
 
 
 

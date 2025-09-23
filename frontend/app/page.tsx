@@ -1,6 +1,19 @@
+"use client"
+import { useEffect, useState } from "react";
 import { AuthForm } from "@/components/auth-form"
 
 export default function HomePage() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    
+    fetch('http://localhost:5000/api/data')
+      .then(response => response.json())
+      .then(data => setData(data))
+      .catch(error => console.error('Error fetching data:', error));
+  }, []);
+
+  if (!data) return <div>Loading...</div>;
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/10">
       <div className="container mx-auto px-4 py-8">
@@ -10,6 +23,7 @@ export default function HomePage() {
               <h1 className="text-4xl font-bold text-balance mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 PlacementPro
               </h1>
+              {/* <h1>{data.message}</h1> */}
               <p className="text-muted-foreground text-pretty">Your gateway to career opportunities</p>
             </div>
             <AuthForm />
