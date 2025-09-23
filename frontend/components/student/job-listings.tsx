@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,59 +8,48 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Building2, MapPin, DollarSign, Calendar, Clock, Search, Filter, CheckCircle, XCircle, Eye } from "lucide-react"
 
-const jobListings = [
-  {
-    id: 1,
-    title: "Software Engineer",
-    company: "TechCorp Inc.",
-    location: "San Francisco, CA",
-    salary: "$80,000 - $120,000",
-    type: "Full-time",
-    posted: "2 days ago",
-    deadline: "Dec 15, 2024",
-    eligible: true,
-    applied: false,
-    description: "Join our innovative team building next-generation software solutions.",
-    requirements: ["React", "Node.js", "TypeScript"],
-    logo: "/abstract-tech-logo.png",
-  },
-  {
-    id: 2,
-    title: "Frontend Developer",
-    company: "StartupXYZ",
-    location: "Remote",
-    salary: "$70,000 - $100,000",
-    type: "Full-time",
-    posted: "1 week ago",
-    deadline: "Dec 20, 2024",
-    eligible: true,
-    applied: true,
-    description: "Build beautiful, responsive web applications using modern frameworks.",
-    requirements: ["React", "CSS", "JavaScript"],
-    logo: "/abstract-startup-logo.png",
-  },
-  {
-    id: 3,
-    title: "Data Scientist",
-    company: "DataFlow Analytics",
-    location: "New York, NY",
-    salary: "$90,000 - $130,000",
-    type: "Full-time",
-    posted: "3 days ago",
-    deadline: "Dec 10, 2024",
-    eligible: false,
-    applied: false,
-    description: "Analyze complex datasets to drive business insights and decisions.",
-    requirements: ["Python", "Machine Learning", "SQL"],
-    logo: "/analytics-company-logo.png",
-  },
-]
+interface Job {
+  id: string
+  title: string
+  company: string
+  location: string
+  salary: string
+  type: string
+  posted: string
+  deadline: string
+  eligible: boolean
+  applied: boolean
+  description: string
+  requirements: string[]
+  logo: string
+}
 
 export function JobListings() {
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterType, setFilterType] = useState("all")
 
-  const filteredJobs = jobListings.filter((job) => {
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        const res = await fetch("http://localhost:5000/api/student/jobs", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) throw new Error("Failed to fetch jobs")
+        const data = await res.json()
+        setJobs(data)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchJobs()
+  }, [])
+
+  const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.company.toLowerCase().includes(searchTerm.toLowerCase())
@@ -68,6 +57,8 @@ export function JobListings() {
       filterType === "all" || (filterType === "eligible" && job.eligible) || (filterType === "applied" && job.applied)
     return matchesSearch && matchesFilter
   })
+
+  if (loading) return <p className="text-center py-8">Loading jobs...</p>
 
   return (
     <div className="space-y-6">
