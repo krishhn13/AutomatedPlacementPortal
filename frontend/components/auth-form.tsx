@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,22 +17,60 @@ export function AuthForm() {
   const [isLogin, setIsLogin] = useState(true)
   const [selectedRole, setSelectedRole] = useState<UserRole>("student")
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setErrorMessage("")
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    const formData = new FormData(e.target as HTMLFormElement)
 
-    // Redirect based on role
-    const redirectPaths = {
-      student: "/student/dashboard",
-      company: "/company/dashboard",
-      admin: "/admin/dashboard",
+    const payload: any = {
+      email: formData.get("email"),
+      password: formData.get("password"),
+      role: selectedRole,
     }
 
-    window.location.href = redirectPaths[selectedRole]
+    if (!isLogin) {
+      payload.name = formData.get("name")
+      payload.phone = formData.get("phone")
+      payload.rollNo = formData.get("rollNo")
+      payload.branch = formData.get("branch")
+      payload.cgpa = formData.get("cgpa")
+      payload.skills = formData.get("skills")
+      payload.backlogs = formData.get("backlogs")
+    }
+
+    try {
+      let endpoint = ""
+      if (selectedRole === "student") {
+        endpoint = isLogin ? "login" : "register"
+      }
+      // later: add company/admin logic
+
+      const res = await fetch(`http://localhost:5000/api/auth/${endpoint}/student`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        if (isLogin && data.token) {
+          localStorage.setItem("token", data.token)
+        }
+        window.location.href = `/${selectedRole}/dashboard`
+      } else {
+        setErrorMessage(data.message || "Something went wrong")
+      }
+    } catch (err) {
+      console.error(err)
+      setErrorMessage("Server unreachable. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const roleConfig = {
@@ -69,7 +106,9 @@ export function AuthForm() {
             {currentRole.title}
           </Badge>
         </div>
-        <CardTitle className="text-2xl font-bold text-balance">{isLogin ? "Welcome Back" : "Create Account"}</CardTitle>
+        <CardTitle className="text-2xl font-bold text-balance">
+          {isLogin ? "Welcome Back" : "Create Account"}
+        </CardTitle>
         <CardDescription className="text-pretty">{currentRole.description}</CardDescription>
       </CardHeader>
 
@@ -130,7 +169,7 @@ export function AuthForm() {
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="name" placeholder="Enter your full name" className="pl-10 glass" required />
+                <Input id="name" name="name" placeholder="Enter your full name" className="pl-10 glass" required />
               </div>
             </div>
           )}
@@ -139,7 +178,7 @@ export function AuthForm() {
             <Label htmlFor="email">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input id="email" type="email" placeholder="Enter your email" className="pl-10 glass" required />
+              <Input id="email" name="email" type="email" placeholder="Enter your email" className="pl-10 glass" required />
             </div>
           </div>
 
@@ -147,18 +186,49 @@ export function AuthForm() {
             <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input id="password" type="password" placeholder="Enter your password" className="pl-10 glass" required />
+              <Input id="password" name="password" type="password" placeholder="Enter your password" className="pl-10 glass" required />
             </div>
           </div>
 
           {!isLogin && selectedRole === "student" && (
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="phone" type="tel" placeholder="Enter your phone number" className="pl-10 glass" required />
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input id="phone" name="phone" type="tel" placeholder="Enter your phone number" className="pl-10 glass" required />
+                </div>
               </div>
-            </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="rollNo">Roll Number</Label>
+                <Input id="rollNo" name="rollNo" placeholder="Enter roll number" className="glass" required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="branch">Branch</Label>
+                <Input id="branch" name="branch" placeholder="Enter branch" className="glass" required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cgpa">CGPA</Label>
+                <Input id="cgpa" name="cgpa" placeholder="Enter CGPA" className="glass" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="skills">Skills</Label>
+                <Input id="skills" name="skills" placeholder="e.g. React, Node.js" className="glass" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="backlogs">Backlogs</Label>
+                <Input id="backlogs" name="backlogs" placeholder="Enter number of backlogs" className="glass" />
+              </div>
+            </>
+          )}
+
+          {errorMessage && (
+            <p className="text-red-500 text-sm">{errorMessage}</p>
           )}
 
           <Button
