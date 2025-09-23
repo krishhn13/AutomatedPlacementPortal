@@ -13,33 +13,13 @@ interface Resume {
   size: number
 }
 
-export function ResumeUploader() {
-  const [resume, setResume] = useState<Resume | null>(null)
+interface ResumeUploaderProps {
+  student: any
+  setStudent: (student: any) => void
+}
+
+export function ResumeUploader({ student, setStudent }: ResumeUploaderProps) {
   const [isUploading, setIsUploading] = useState(false)
-
-  const fetchResume = async () => {
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch("http://localhost:5000/api/student/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      const data = await res.json()
-      if (data.resume) {
-        setResume({
-          filename: data.resume.filename,
-          url: data.resume.url,
-          uploadedAt: new Date(data.resume.uploadedAt).toLocaleDateString(),
-          size: data.resume.size,
-        })
-      }
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  useEffect(() => {
-    fetchResume()
-  }, [])
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
@@ -57,30 +37,35 @@ export function ResumeUploader() {
         body: formData,
       })
       const data = await res.json()
-      setResume({
-        filename: data.resume.filename,
-        url: data.resume.url,
-        uploadedAt: new Date(data.resume.uploadedAt).toLocaleDateString(),
-        size: data.resume.size,
-      })
+      setStudent((prev: any) => ({
+        ...prev,
+        resume: {
+          filename: data.resume.filename,
+          url: data.resume.url,
+          uploadedAt: data.resume.uploadedAt,
+          size: data.resume.size,
+        },
+      }))
     } catch (err) {
-      console.error(err)
+      console.error("Upload error:", err)
     } finally {
       setIsUploading(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!resume) return
+    if (!student?.resume) return
     try {
       const token = localStorage.getItem("token")
       const res = await fetch("http://localhost:5000/api/student/resume", {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (res.ok) setResume(null)
+      if (res.ok) {
+        setStudent((prev: any) => ({ ...prev, resume: null }))
+      }
     } catch (err) {
-      console.error(err)
+      console.error("Delete error:", err)
     }
   }
 
@@ -95,7 +80,7 @@ export function ResumeUploader() {
       </CardHeader>
 
       <CardContent>
-        {resume ? (
+        {student?.resume ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 border border-border/50 rounded-lg bg-muted/30">
               <div className="flex items-center space-x-3">
@@ -103,25 +88,24 @@ export function ResumeUploader() {
                   <FileText className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <p className="font-medium">{resume.filename}</p>
+                  <p className="font-medium">{student.resume.filename}</p>
                   <p className="text-sm text-muted-foreground">
-                    Uploaded {resume.uploadedAt} • {(resume.size / 1024).toFixed(1)} KB
+                    Uploaded {new Date(student.resume.uploadedAt).toLocaleDateString()} •{" "}
+                    {(student.resume.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Badge className="bg-accent/10 text-accent border-accent/20">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Active
-                </Badge>
-              </div>
+              <Badge className="bg-accent/10 text-accent border-accent/20">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Active
+              </Badge>
             </div>
 
             <div className="flex space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(resume.url, "_blank")}
+                onClick={() => window.open(student.resume?.url, "_blank")}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 Preview
@@ -131,8 +115,8 @@ export function ResumeUploader() {
                 size="sm"
                 onClick={() => {
                   const link = document.createElement("a")
-                  link.href = resume.url
-                  link.download = resume.filename
+                  link.href = student.resume?.url || ""
+                  link.download = student.resume?.filename
                   link.click()
                 }}
               >
@@ -157,13 +141,13 @@ export function ResumeUploader() {
             </div>
             <h3 className="font-medium mb-2">No resume uploaded</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Upload your resume to start applying for jobs
+              Upload your resume to start applying
             </p>
           </div>
         )}
 
         <div className="mt-4">
-          <label className="w-full">
+          <label className="w-full cursor-pointer">
             <input
               type="file"
               accept="application/pdf"
@@ -180,7 +164,7 @@ export function ResumeUploader() {
               ) : (
                 <>
                   <Upload className="w-4 h-4 mr-2" />
-                  {resume ? "Upload New Resume" : "Upload Resume"}
+                  {student?.resume ? "Upload New Resume" : "Upload Resume"}
                 </>
               )}
             </Button>
