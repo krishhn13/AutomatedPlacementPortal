@@ -1,38 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Clock, CheckCircle, XCircle, Eye, Building2, Calendar, ArrowRight } from "lucide-react"
 
 const statusConfig = {
-  applied: {
-    color: "bg-secondary/10 text-secondary border-secondary/20",
-    icon: Clock,
-    label: "Applied",
-  },
-  shortlisted: {
-    color: "bg-accent/10 text-accent border-accent/20",
-    icon: CheckCircle,
-    label: "Shortlisted",
-  },
-  interview: {
-    color: "bg-primary/10 text-primary border-primary/20",
-    icon: Clock,
-    label: "Interview",
-  },
-  selected: {
-    color: "bg-green-500/10 text-green-600 border-green-500/20",
-    icon: CheckCircle,
-    label: "Selected",
-  },
-  rejected: {
-    color: "bg-destructive/10 text-destructive border-destructive/20",
-    icon: XCircle,
-    label: "Rejected",
-  },
+  applied: { color: "bg-secondary/10 text-secondary border-secondary/20", icon: Clock, label: "Applied" },
+  shortlisted: { color: "bg-accent/10 text-accent border-accent/20", icon: CheckCircle, label: "Shortlisted" },
+  interview: { color: "bg-primary/10 text-primary border-primary/20", icon: Clock, label: "Interview" },
+  selected: { color: "bg-green-500/10 text-green-600 border-green-500/20", icon: CheckCircle, label: "Selected" },
+  rejected: { color: "bg-destructive/10 text-destructive border-destructive/20", icon: XCircle, label: "Rejected" },
 }
 
 interface Application {
@@ -40,10 +20,10 @@ interface Application {
   jobTitle: string
   company: string
   appliedDate: string
-  status: "applied" | "shortlisted" | "interview" | "selected" | "rejected"
+  status: keyof typeof statusConfig
   progress: number
-  nextStep: string
-  nextDate: string
+  nextStep?: string
+  nextDate?: string
 }
 
 interface ApplicationTrackerProps {
@@ -62,46 +42,35 @@ export function ApplicationTracker({ detailed = false }: ApplicationTrackerProps
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error("Failed to fetch applications")
-
         const data = await res.json()
-        // Ensure we always have an array
+        // Ensure we have array
         setApplications(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error("Error fetching applications:", err)
-        setApplications([])
       } finally {
         setLoading(false)
       }
     }
-
     fetchApplications()
   }, [])
 
-  // Safe slicing
-  const displayApplications = Array.isArray(applications)
-    ? detailed
-      ? applications
-      : applications.slice(0, 3)
-    : []
+  const displayApplications = detailed ? applications : applications.slice(0, 3)
 
   return (
     <Card className="glass-card">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              Application Status
-            </CardTitle>
-            <CardDescription>Track your job application progress</CardDescription>
-          </div>
-          {!detailed && (
-            <Button variant="ghost" size="sm">
-              View All
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          )}
+      <CardHeader className="flex justify-between items-center">
+        <div>
+          <CardTitle className="flex items-center">
+            <CheckCircle className="w-5 h-5 mr-2" />
+            Application Status
+          </CardTitle>
+          <CardDescription>Track your job application progress</CardDescription>
         </div>
+        {!detailed && (
+          <Button variant="ghost" size="sm">
+            View All <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        )}
       </CardHeader>
 
       <CardContent>
@@ -112,7 +81,6 @@ export function ApplicationTracker({ detailed = false }: ApplicationTrackerProps
             {displayApplications.map((app) => {
               const status = statusConfig[app.status]
               const StatusIcon = status.icon
-
               return (
                 <div
                   key={app.id}
@@ -153,7 +121,7 @@ export function ApplicationTracker({ detailed = false }: ApplicationTrackerProps
                     )}
                   </div>
 
-                  {app.status !== "rejected" && app.status !== "selected" && (
+                  {app.nextStep && (
                     <div className="mt-3 p-2 bg-accent/5 rounded border border-accent/20">
                       <p className="text-sm font-medium text-accent">Next: {app.nextStep}</p>
                       <p className="text-xs text-muted-foreground">{app.nextDate}</p>
@@ -165,9 +133,7 @@ export function ApplicationTracker({ detailed = false }: ApplicationTrackerProps
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="mx-auto w-12 h-12 bg-muted rounded-lg flex items-center justify-center mb-4">
-              <CheckCircle className="w-6 h-6 text-muted-foreground" />
-            </div>
+            <CheckCircle className="mx-auto w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="font-medium mb-2">No applications yet</h3>
             <p className="text-sm text-muted-foreground">Start applying to jobs to track your progress here</p>
           </div>
