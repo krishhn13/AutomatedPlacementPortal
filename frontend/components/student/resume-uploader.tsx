@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +20,7 @@ interface ResumeUploaderProps {
 
 export function ResumeUploader({ student, setStudent }: ResumeUploaderProps) {
   const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
@@ -50,6 +51,7 @@ export function ResumeUploader({ student, setStudent }: ResumeUploaderProps) {
       console.error("Upload error:", err)
     } finally {
       setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = "" // reset file input
     }
   }
 
@@ -146,29 +148,34 @@ export function ResumeUploader({ student, setStudent }: ResumeUploaderProps) {
           </div>
         )}
 
+        {/* Hidden input for upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={handleUpload}
+          disabled={isUploading}
+        />
+
         <div className="mt-4">
-          <label className="w-full cursor-pointer">
-            <input
-              type="file"
-              accept="application/pdf"
-              className="hidden"
-              onChange={handleUpload}
-              disabled={isUploading}
-            />
-            <Button className="w-full">
-              {isUploading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  {student?.resume ? "Upload New Resume" : "Upload Resume"}
-                </>
-              )}
-            </Button>
-          </label>
+          <Button
+            className="w-full"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                {student?.resume ? "Upload New Resume" : "Upload Resume"}
+              </>
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
