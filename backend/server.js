@@ -26,7 +26,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-
 // importing routes
 const companyRoutes = require("./routes/companyRoutes");
 const studentRoutes = require("./routes/studentRoutes");
