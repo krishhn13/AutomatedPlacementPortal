@@ -40,7 +40,6 @@ app.get("/api/data",(req,res)=>{
 
 
 
-
 // using routes
 app.use('/api', authRoutes);
 app.use('/api', studentRoutes);
