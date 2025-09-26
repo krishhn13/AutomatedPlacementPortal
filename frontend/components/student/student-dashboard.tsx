@@ -64,7 +64,9 @@ export default function StudentDashboard() {
                 <ProfileCard student={student} />
               </div>
               <div className="lg:col-span-2 space-y-6">
-                <ResumeUploader />
+                <ResumeUploader student={undefined} setStudent={function (student: any): void {
+                  throw new Error("Function not implemented.")
+                } } />
                 <ApplicationTracker />
               </div>
             </div>
