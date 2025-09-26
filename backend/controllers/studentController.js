@@ -1,6 +1,5 @@
 const Students = require('../models/Student');
 
-
 const getProfile = async (req, res) => {
     try {
         const student = await Students.findById(req.user._id).select('-password');
