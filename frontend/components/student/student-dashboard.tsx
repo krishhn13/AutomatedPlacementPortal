@@ -42,7 +42,9 @@ export default function StudentDashboard() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Welcome back, {student.name}!</h1>
-          <p className="text-muted-foreground">Track your applications and discover new opportunities</p>
+          <p className="text-muted-foreground">
+            Track your applications and discover new opportunities
+          </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -58,24 +60,25 @@ export default function StudentDashboard() {
             </TabsTrigger>
           </TabsList>
 
+          {/* Overview tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1 space-y-6">
                 <ProfileCard student={student} />
               </div>
               <div className="lg:col-span-2 space-y-6">
-                <ResumeUploader student={undefined} setStudent={function (student: any): void {
-                  throw new Error("Function not implemented.")
-                } } />
+                <ResumeUploader student={student} setStudent={setStudent} />
                 <ApplicationTracker />
               </div>
             </div>
           </TabsContent>
 
+          {/* Jobs tab */}
           <TabsContent value="jobs">
             <JobListings />
           </TabsContent>
 
+          {/* Applications tab */}
           <TabsContent value="applications">
             <ApplicationTracker detailed />
           </TabsContent>
@@ -84,3 +87,4 @@ export default function StudentDashboard() {
     </div>
   )
 }
+  
