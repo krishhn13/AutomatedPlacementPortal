@@ -38,7 +38,6 @@ app.get("/api/data",(req,res)=>{
     res.json({message : "Hello from backend"})
 })
 
-
 // using routes
 app.use('/api', authRoutes);
 app.use('/api', studentRoutes);
