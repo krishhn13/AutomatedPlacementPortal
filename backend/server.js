@@ -17,7 +17,6 @@ mongoose.connect(MONGODB_URI)
 
 
 
-
 // Middlewares
 app.use(morgan('tiny'));
 app.use(cors());
