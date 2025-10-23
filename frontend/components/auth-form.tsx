@@ -47,8 +47,8 @@ export function AuthForm() {
       if (selectedRole === "student") {
         endpoint = isLogin ? "login" : "register"
       }
-      
-      // later: add company/admin logic
+
+      // HAVE TO ADD later: add company/admin logic
 
       const res = await fetch(`http://localhost:5000/api/auth/${endpoint}/student`, {
         method: "POST",
