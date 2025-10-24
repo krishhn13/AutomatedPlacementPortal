@@ -1,26 +1,18 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-const Job = new mongoose.Schema({
-        title : {
-                type : String,
-                required : true
-        },
-        package : {
-                type : String,
-                required : true
-        },
-        internship : {
-                type : Boolean,
-                required : true
-        },
-        internshipDuration : {
-                type : String,
-                required : true
-        },
-        stipend : {
-                type : Number
-        }        
-})
+const jobSchema = new mongoose.Schema({
+  title: String,
+  company: String,
+  location: String,
+  salary: String,
+  type: String, // e.g., "Internship", "Full-time"
+  postedAt: { type: Date, default: Date.now },
+  deadline: Date,
+  description: String,
+  requirements: [String],
+  logo: String,
+  minCGPA: Number,
+  allowedBranches: [String],
+});
 
-
-module.exports = mongoose.model("Jobs",job)
+module.exports = mongoose.model('Job', jobSchema);
