@@ -8,7 +8,10 @@ const applicationSchema = new mongoose.Schema({
   student: {
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User' },
-  appliedAt: { type: Date, default: Date.now },
+  appliedAt: { 
+        type: Date, 
+        default: Date.now 
+},
 });
 
 module.exports = mongoose.model('Application', applicationSchema);
