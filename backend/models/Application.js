@@ -5,7 +5,9 @@ const applicationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Job' 
 },
-  student: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  student: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' },
   appliedAt: { type: Date, default: Date.now },
 });
 
