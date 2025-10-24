@@ -2,7 +2,6 @@ const Students = require('../models/Student');
 const Jobs = require('../models/Job'); 
 const Applications = require('../models/Application');
 
-// ------------------- EXISTING FUNCTIONS -------------------
 
 const getProfile = async (req, res) => {
     try {
@@ -75,7 +74,6 @@ const getApplicationStatus = async (req, res) => {
     }
 };
 
-// ------------------- NEW FUNCTION -------------------
 
 const getAvailableJobs = async (req, res) => {
     try {
