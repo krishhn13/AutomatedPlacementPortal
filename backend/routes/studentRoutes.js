@@ -27,5 +27,6 @@ router.get('/student/profile', authMiddleware, roleMiddleware(['student']), stud
 router.put('/student/profile', authMiddleware, roleMiddleware(['student']), upload.single('resume'), studentController.updateProfile);
 router.post('/student/apply/:jobId', authMiddleware, roleMiddleware(['student']), studentController.applyJob);
 router.get('/student/status', authMiddleware, roleMiddleware(['student']), studentController.getApplicationStatus);
+router.get('/student/jobs', authMiddleware, roleMiddleware(['student']), studentController.getAvailableJobs);
 
 module.exports = router;
