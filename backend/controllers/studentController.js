@@ -1,6 +1,6 @@
 const Students = require('../models/Student');
-const Jobs = require('../models/Job'); // ✅ Make sure this exists
-const Applications = require('../models/Application'); // optional if you’re tracking applications
+const Jobs = require('../models/Job'); 
+const Applications = require('../models/Application');
 
 // ------------------- EXISTING FUNCTIONS -------------------
 
