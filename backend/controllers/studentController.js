@@ -113,7 +113,6 @@ const getAvailableJobs = async (req, res) => {
     }
 };
 
-// ------------------- EXPORTS -------------------
 
 module.exports = {
     getProfile,
