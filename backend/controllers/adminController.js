@@ -13,7 +13,8 @@ const getPlacementReports = async (req, res) => {
                             $objectToArray: "$status" 
                         }, cond: {
                              $eq: ["$$this.v", "Selected"] 
-                            } } } }, 0] }
+                            } 
+                        } } }, 0] }
         });
 
         const branchStats = await Students.aggregate([
