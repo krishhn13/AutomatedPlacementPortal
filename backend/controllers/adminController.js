@@ -7,7 +7,8 @@ const getPlacementReports = async (req, res) => {
         const placed = await Students.countDocuments({
             status: { $exists: true, $ne: {} },
             $expr: { $gt: [{
-                 $size: { $filter: { input: { $objectToArray: "$status" }, cond: { $eq: ["$$this.v", "Selected"] } } } }, 0] }
+                 $size: {
+                     $filter: { input: { $objectToArray: "$status" }, cond: { $eq: ["$$this.v", "Selected"] } } } }, 0] }
         });
 
         const branchStats = await Students.aggregate([
