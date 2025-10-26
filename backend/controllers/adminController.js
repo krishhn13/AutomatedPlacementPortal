@@ -14,7 +14,8 @@ const getPlacementReports = async (req, res) => {
                         }, cond: {
                              $eq: ["$$this.v", "Selected"] 
                             } 
-                        } } }, 0] }
+                        } 
+                    } }, 0] }
         });
 
         const branchStats = await Students.aggregate([
