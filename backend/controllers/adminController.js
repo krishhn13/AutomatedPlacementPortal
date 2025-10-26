@@ -9,7 +9,7 @@ const getPlacementReports = async (req, res) => {
             $expr: { $gt: [{
                 $size : {
                     $filter : {
-                         input: { 
+                        input: { 
                             $objectToArray: "$status" 
                         }, cond: {
                              $eq: ["$$this.v", "Selected"] 
