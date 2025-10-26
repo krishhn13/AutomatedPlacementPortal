@@ -18,7 +18,7 @@ const getPlacementReports = async (req, res) => {
                         } 
                     }
                  }, 0]
-                 }
+                }
         });
 
         const branchStats = await Students.aggregate([
