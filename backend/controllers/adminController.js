@@ -7,7 +7,7 @@ const getPlacementReports = async (req, res) => {
         const placed = await Students.countDocuments({
             status: { $exists: true, $ne: {} },
             $expr: { $gt: [{
-                 $size : {
+                $size : {
                     $filter : {
                          input: { 
                             $objectToArray: "$status" 
