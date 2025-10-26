@@ -11,7 +11,8 @@ const getPlacementReports = async (req, res) => {
                     $filter : {
                         input: { 
                             $objectToArray: "$status" 
-                        }, cond: {
+                        }, 
+                        cond: {
                              $eq: ["$$this.v", "Selected"] 
                             } 
                         } 
