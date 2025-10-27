@@ -35,7 +35,8 @@ const getPlacementReports = async (req, res) => {
                                     { 
                                         $objectToArray: "$status" 
                                     },
-                                    cond: { $eq: ["$$this.v", "Selected"] }
+                                    cond: { 
+                                        $eq: ["$$this.v", "Selected"] }
                                 }
                             }
                         }
