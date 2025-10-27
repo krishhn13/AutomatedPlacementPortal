@@ -37,7 +37,6 @@ const getPlacementReports = async (req, res) => {
                                     },
                                     cond: { 
                                         $eq: ["$$this.v", "Selected"] 
-                                    
                                     }
                                 }
                             }
