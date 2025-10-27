@@ -80,7 +80,7 @@ export function ApplicationTracker({ detailed = false }: ApplicationTrackerProps
             {
               displayApplications.map((app) => {
                 const status = statusConfig[app.status]
-              const StatusIcon = status.icon
+                const StatusIcon = status.icon
               return (
                 <div
                   key={app.id}
