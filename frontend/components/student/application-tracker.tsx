@@ -79,7 +79,7 @@ export function ApplicationTracker({ detailed = false }: ApplicationTrackerProps
           <div className="space-y-4">
             {
               displayApplications.map((app) => {
-              const status = statusConfig[app.status]
+                const status = statusConfig[app.status]
               const StatusIcon = status.icon
               return (
                 <div
