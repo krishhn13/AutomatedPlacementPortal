@@ -77,7 +77,8 @@ export function ApplicationTracker({ detailed = false }: ApplicationTrackerProps
           <p className="text-center text-muted-foreground">Loading applications...</p>
         ) : displayApplications.length > 0 ? (
           <div className="space-y-4">
-            {displayApplications.map((app) => {
+            {
+            displayApplications.map((app) => {
               const status = statusConfig[app.status]
               const StatusIcon = status.icon
               return (
