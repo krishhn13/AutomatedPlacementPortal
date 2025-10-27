@@ -31,7 +31,8 @@ const getPlacementReports = async (req, res) => {
                         $sum: {
                             $size: {
                                 $filter: {
-                                    input: { $objectToArray: "$status" },
+                                    input:
+                                     { $objectToArray: "$status" },
                                     cond: { $eq: ["$$this.v", "Selected"] }
                                 }
                             }
