@@ -1,67 +1,84 @@
 "use client"
 
+import { Building2, LogOut, Settings, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Bell, Settings, LogOut, Building2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-export function CompanyNavbar() {
+interface Company {
+  _id: string
+  name: string
+  email: string
+  phone?: string
+  website?: string
+  location?: string
+  industry?: string
+}
+
+interface CompanyNavbarProps {
+  company?: Company | null
+}
+
+export function CompanyNavbar({ company }: CompanyNavbarProps) {
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("userId")
+    localStorage.removeItem("userData")
+    window.location.href = "/"
+  }
+
+  const handleProfile = () => {
+    // Navigate to company profile page
+    console.log("Navigate to company profile")
+  }
+
+  const handleSettings = () => {
+    // Navigate to company settings
+    console.log("Navigate to company settings")
+  }
+
   return (
-    <nav className="sticky top-0 z-50 glass-card border-b backdrop-blur-xl">
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              PlacementPro
-            </h1>
-            <Badge variant="secondary" className="hidden sm:inline-flex">
-              Company Portal
-            </Badge>
+            <Building2 className="h-8 w-8 text-primary" />
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-semibold">Placement Portal</h1>
+              <p className="text-sm text-muted-foreground">Company Dashboard</p>
+            </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <ThemeToggle />
-
-            <Button variant="ghost" size="icon" className="relative transition-all duration-200 hover:scale-110">
-              <Bell className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-accent animate-pulse">
-                5
-              </Badge>
-            </Button>
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium">{company?.name || "Company"}</p>
+              <p className="text-xs text-muted-foreground">{company?.industry || "Recruitment"}</p>
+            </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-8 w-8 rounded-full transition-all duration-200 hover:scale-110"
-                >
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/company-avatar.png" alt="Company" />
-                    <AvatarFallback>TC</AvatarFallback>
+                    <AvatarImage src="" alt={company?.name || "Company"} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <Building2 className="h-4 w-4" />
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="glass-card w-56" align="end">
-                <DropdownMenuItem className="transition-colors duration-200">
-                  <Building2 className="mr-2 h-4 w-4" />
-                  Company Profile
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem onClick={handleProfile}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Company Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="transition-colors duration-200">
+                <DropdownMenuItem onClick={handleSettings}>
                   <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  <span>Settings</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="transition-colors duration-200">
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+                  <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

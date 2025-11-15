@@ -1,6 +1,6 @@
 const express = require('express')
 const companyController = require("../controllers/companyController")
-const authMiddleware = require("../middleware/authMiddleware")
+const authMiddleware = require("../middlewares/authMiddleware")
 const router = express.Router()
 
 // Public routes
