@@ -38,7 +38,7 @@ const getByName = async (req, res) => {
 // Get all applicants for company's jobs
 const getApplicants = async (req, res) => {
   try {
-    const companyId = req.user.userId; // From auth middleware
+    const companyId = req.user._id; // From your auth middleware
     
     // Find all jobs by this company
     const companyJobs = await jobModel.find({ companyId: companyId });
@@ -89,7 +89,7 @@ const getApplicants = async (req, res) => {
 // Get company's jobs
 const getCompanyJobs = async (req, res) => {
   try {
-    const companyId = req.user.userId; // From auth middleware
+    const companyId = req.user._id; // From your auth middleware
     const jobs = await jobModel.find({ companyId: companyId });
     
     return res.status(200).json({ jobs: jobs });
@@ -104,7 +104,7 @@ const updateApplicationStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;
     const { status, jobId } = req.body;
-    const companyId = req.user.userId;
+    const companyId = req.user._id; // From your auth middleware
     
     // Verify the job belongs to the company
     const job = await jobModel.findOne({ _id: jobId, companyId: companyId });
