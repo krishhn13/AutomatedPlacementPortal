@@ -1,6 +1,6 @@
 "use client"
 
-import { Building2, LogOut, Settings, User } from "lucide-react"
+import { Building2, LogOut, Settings, User, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -17,9 +17,10 @@ interface Company {
 
 interface CompanyNavbarProps {
   company?: Company | null
+  onRefresh?: () => void
 }
 
-export function CompanyNavbar({ company }: CompanyNavbarProps) {
+export function CompanyNavbar({ company, onRefresh }: CompanyNavbarProps) {
   const handleLogout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("userRole")
@@ -51,6 +52,18 @@ export function CompanyNavbar({ company }: CompanyNavbarProps) {
           </div>
 
           <div className="flex items-center space-x-4">
+            {onRefresh && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRefresh}
+                className="hidden sm:flex"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            )}
+            
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium">{company?.name || "Company"}</p>
               <p className="text-xs text-muted-foreground">{company?.industry || "Recruitment"}</p>

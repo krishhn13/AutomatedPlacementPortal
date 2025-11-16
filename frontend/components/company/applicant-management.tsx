@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search, Filter, Eye, Download, Mail, Phone, GraduationCap, MapPin, Calendar, Loader2, User } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-interface Applicant {
+interface Student {
   _id: string
   name: string
   email: string
@@ -27,22 +27,30 @@ interface Applicant {
     uploadedAt: string
     size: number
   }
-  appliedJobs: Array<{
-    jobId: string
-    jobTitle: string
-    companyId: string
-    companyName: string
-    appliedDate: string
-    status: "applied" | "shortlisted" | "interview" | "selected" | "rejected"
-    resume: string
-  }>
   avatar?: string
+}
+
+interface Application {
+  _id: string
+  studentId: string | Student
+  jobId: string
+  appliedDate: string
+  status: "applied" | "shortlisted" | "interview" | "selected" | "rejected"
+  resume?: {
+    filename: string
+    url: string
+    uploadedAt: string
+    size: number
+  }
+  jobTitle?: string
+  companyName?: string
 }
 
 interface Job {
   _id: string
   title: string
   company: string
+  companyId: string
 }
 
 const statusConfig = {
@@ -68,81 +76,22 @@ const statusConfig = {
   },
 }
 
-// Mock data for development
-const mockApplicants: Applicant[] = [
-  {
-    _id: "1",
-    name: "Alex Johnson",
-    email: "alex.johnson@university.edu",
-    phone: "+1 (555) 123-4567",
-    location: "New York, NY",
-    education: "Computer Science",
-    branch: "Computer Science",
-    cgpa: 8.7,
-    rollNo: "CS2023001",
-    skills: ["React", "Node.js", "TypeScript", "MongoDB"],
-    resume: {
-      filename: "alex_johnson_resume.pdf",
-      url: "/resumes/sample.pdf",
-      uploadedAt: "2024-01-15",
-      size: 1024000
-    },
-    appliedJobs: [{
-      jobId: "job1",
-      jobTitle: "Frontend Developer",
-      companyId: "company1",
-      companyName: "Tech Corp",
-      appliedDate: "2024-01-20",
-      status: "applied",
-      resume: "alex_johnson_resume.pdf"
-    }]
-  },
-  {
-    _id: "2",
-    name: "Sarah Williams",
-    email: "sarah.w@college.edu",
-    phone: "+1 (555) 234-5678",
-    location: "San Francisco, CA",
-    education: "Software Engineering",
-    branch: "Software Engineering",
-    cgpa: 9.1,
-    rollNo: "SE2023002",
-    skills: ["React", "CSS", "JavaScript", "UI/UX"],
-    resume: {
-      filename: "sarah_williams_resume.pdf",
-      url: "/resumes/sample.pdf",
-      uploadedAt: "2024-01-18",
-      size: 980000
-    },
-    appliedJobs: [{
-      jobId: "job1",
-      jobTitle: "Frontend Developer",
-      companyId: "company1",
-      companyName: "Tech Corp",
-      appliedDate: "2024-01-19",
-      status: "shortlisted",
-      resume: "sarah_williams_resume.pdf"
-    }]
-  }
-]
-
 export function ApplicantManagement() {
-  const [applicants, setApplicants] = useState<Applicant[]>([])
+  const [applications, setApplications] = useState<Application[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [jobFilter, setJobFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
-  const [usingMockData, setUsingMockData] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
-    fetchApplicants()
+    fetchApplications()
     fetchCompanyJobs()
   }, [])
 
-  const fetchApplicants = async () => {
+  const fetchApplications = async () => {
     try {
       setLoading(true)
       const token = localStorage.getItem("token")
@@ -151,48 +100,83 @@ export function ApplicantManagement() {
         throw new Error("No authentication token found")
       }
 
+      const res = await fetch("http://localhost:5000/api/company/applications", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          // If endpoint doesn't exist, try the old endpoint
+          await fetchApplicantsLegacy()
+          return
+        }
+        throw new Error(`Failed to fetch applications: ${res.status} ${res.statusText}`)
+      }
+
+      const data = await res.json()
+      setApplications(data.applications || data || [])
+      
+    } catch (error) {
+      console.error("Error fetching applications:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load applications",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fallback to old endpoint structure
+  const fetchApplicantsLegacy = async () => {
+    try {
+      const token = localStorage.getItem("token")
       const res = await fetch("http://localhost:5000/api/company/applicants", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
-      // If endpoint doesn't exist yet (404), use mock data
-      if (res.status === 404) {
-        console.log("Applicants endpoint not implemented, using mock data")
-        setApplicants(mockApplicants)
-        setUsingMockData(true)
-        toast({
-          title: "Development Mode",
-          description: "Using sample data - backend integration in progress",
-          variant: "default",
-        })
-        return
+      if (res.ok) {
+        const data = await res.json()
+        // Transform legacy data format to applications format
+        const transformedApplications = transformLegacyData(data)
+        setApplications(transformedApplications)
+      } else {
+        throw new Error("No applications data available")
       }
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch applicants: ${res.status} ${res.statusText}`)
-      }
-
-      const data = await res.json()
-      setApplicants(data.applicants || data || [])
-      setUsingMockData(false)
-      
     } catch (error) {
-      console.error("Error fetching applicants:", error)
-      
-      // Use mock data as fallback
-      setApplicants(mockApplicants)
-      setUsingMockData(true)
-      
-      toast({
-        title: "Using Sample Data",
-        description: "Real applicant data will appear when backend is fully configured",
-        variant: "default",
-      })
-    } finally {
-      setLoading(false)
+      console.error("Error fetching legacy applicants:", error)
+      setApplications([])
     }
+  }
+
+  const transformLegacyData = (data: any): Application[] => {
+    if (!data.applicants || !Array.isArray(data.applicants)) return []
+    
+    const applications: Application[] = []
+    
+    data.applicants.forEach((applicant: any) => {
+      if (applicant.appliedJobs && Array.isArray(applicant.appliedJobs)) {
+        applicant.appliedJobs.forEach((jobApp: any) => {
+          applications.push({
+            _id: `${applicant._id}-${jobApp.jobId}`,
+            studentId: applicant,
+            jobId: jobApp.jobId,
+            appliedDate: jobApp.appliedDate,
+            status: jobApp.status,
+            resume: applicant.resume,
+            jobTitle: jobApp.jobTitle,
+            companyName: jobApp.companyName
+          })
+        })
+      }
+    })
+    
+    return applications
   }
 
   const fetchCompanyJobs = async () => {
@@ -212,63 +196,39 @@ export function ApplicantManagement() {
       }
     } catch (error) {
       console.error("Error fetching jobs:", error)
-      // Continue without jobs data
     }
   }
 
-  const updateApplicationStatus = async (applicantId: string, jobId: string, newStatus: string) => {
+  const updateApplicationStatus = async (applicationId: string, newStatus: string) => {
     try {
-      setUpdatingStatus(applicantId)
-      
-      if (usingMockData) {
-        // Update mock data locally
-        setApplicants(prev => prev.map(applicant => ({
-          ...applicant,
-          appliedJobs: applicant.appliedJobs.map(jobApp => 
-            jobApp.jobId === jobId ? { ...jobApp, status: newStatus as any } : jobApp
-          )
-        })))
-        
-        toast({
-          title: "Status Updated (Demo)",
-          description: `Application status changed to ${newStatus}`,
-          variant: "default",
-        })
-        return
-      }
-
+      setUpdatingStatus(applicationId)
       const token = localStorage.getItem("token")
+      
       if (!token) {
         throw new Error("No authentication token")
       }
       
-      const res = await fetch(`http://localhost:5000/api/company/applications/${applicantId}/status`, {
+      const res = await fetch(`http://localhost:5000/api/company/applications/${applicationId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          status: newStatus,
-          jobId: jobId
+          status: newStatus
         }),
       })
-
-      if (res.status === 404) {
-        throw new Error("Endpoint not implemented yet")
-      }
 
       if (!res.ok) {
         throw new Error(`Failed to update status: ${res.status}`)
       }
 
-      // Update local state for real data
-      setApplicants(prev => prev.map(applicant => ({
-        ...applicant,
-        appliedJobs: applicant.appliedJobs.map(jobApp => 
-          jobApp.jobId === jobId ? { ...jobApp, status: newStatus as any } : jobApp
+      // Update local state
+      setApplications(prev => 
+        prev.map(app => 
+          app._id === applicationId ? { ...app, status: newStatus as any } : app
         )
-      })))
+      )
 
       toast({
         title: "Success",
@@ -279,19 +239,20 @@ export function ApplicantManagement() {
       console.error("Error updating status:", error)
       toast({
         title: "Update Failed",
-        description: usingMockData 
-          ? "This is a demo - changes are local only"
-          : "Failed to update application status",
-        variant: usingMockData ? "default" : "destructive",
+        description: "Failed to update application status",
+        variant: "destructive",
       })
     } finally {
       setUpdatingStatus(null)
     }
   }
 
-  const downloadResume = async (applicant: Applicant) => {
+  const downloadResume = async (application: Application) => {
     try {
-      if (!applicant.resume?.url) {
+      const resume = typeof application.studentId === 'object' ? 
+        application.studentId.resume : application.resume
+      
+      if (!resume?.url) {
         toast({
           title: "No Resume Available",
           description: "This applicant hasn't uploaded a resume yet",
@@ -300,23 +261,18 @@ export function ApplicantManagement() {
         return
       }
 
-      // For mock data or actual file URLs
-      if (applicant.resume.url.startsWith('http') || applicant.resume.url.startsWith('/')) {
-        const link = document.createElement('a')
-        link.href = applicant.resume.url
-        link.download = applicant.resume.filename || `resume-${applicant.name.replace(/\s+/g, '-')}.pdf`
-        link.target = '_blank'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      } else {
-        // Handle base64 or other formats if needed
-        window.open(applicant.resume.url, '_blank')
-      }
+      // Create download link
+      const link = document.createElement('a')
+      link.href = resume.url
+      link.download = resume.filename || `resume-${getStudentName(application)}.pdf`
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
 
       toast({
         title: "Download Started",
-        description: `Downloading ${applicant.name}'s resume`,
+        description: `Downloading ${getStudentName(application)}'s resume`,
         variant: "default",
       })
     } catch (error) {
@@ -329,43 +285,99 @@ export function ApplicantManagement() {
     }
   }
 
-  const viewStudentProfile = (applicant: Applicant) => {
-    // Navigate to student profile or show modal
+  const viewStudentProfile = (application: Application) => {
+    const studentId = typeof application.studentId === 'object' ? 
+      application.studentId._id : application.studentId
+    
     toast({
       title: "View Profile",
-      description: `Viewing ${applicant.name}'s profile`,
+      description: `Viewing ${getStudentName(application)}'s profile`,
       variant: "default",
     })
-    // In a real app: router.push(`/company/student-profile/${applicant._id}`)
+    
+    // In a real app: router.push(`/company/student-profile/${studentId}`)
   }
 
-  // Flatten applicants with their job applications
-  const flattenedApplications = applicants.flatMap(applicant =>
-    applicant.appliedJobs.map(jobApp => ({
-      applicant,
-      application: jobApp,
-      id: `${applicant._id}-${jobApp.jobId}`
-    }))
-  )
+  // Helper functions to handle both student object and student ID
+  const getStudentName = (application: Application): string => {
+    return typeof application.studentId === 'object' ? 
+      application.studentId.name : "Student"
+  }
 
-  const filteredApplications = flattenedApplications.filter(({ applicant, application }) => {
+  const getStudentEmail = (application: Application): string => {
+    return typeof application.studentId === 'object' ? 
+      application.studentId.email : "Email not available"
+  }
+
+  const getStudentPhone = (application: Application): string => {
+    return typeof application.studentId === 'object' ? 
+      application.studentId.phone : "Phone not available"
+  }
+
+  const getStudentLocation = (application: Application): string => {
+    return typeof application.studentId === 'object' ? 
+      (application.studentId.location || "Location not specified") : "Location not specified"
+  }
+
+  const getStudentEducation = (application: Application): string => {
+    if (typeof application.studentId !== 'object') return "Education not specified"
+    
+    return application.studentId.education || 
+           application.studentId.branch || 
+           "Education not specified"
+  }
+
+  const getStudentCGPA = (application: Application): number | undefined => {
+    return typeof application.studentId === 'object' ? 
+      application.studentId.cgpa : undefined
+  }
+
+  const getStudentRollNo = (application: Application): string | undefined => {
+    return typeof application.studentId === 'object' ? 
+      application.studentId.rollNo : undefined
+  }
+
+  const getStudentSkills = (application: Application): string[] => {
+    return typeof application.studentId === 'object' ? 
+      (application.studentId.skills || []) : []
+  }
+
+  const getStudentAvatar = (application: Application): string | undefined => {
+    return typeof application.studentId === 'object' ? 
+      application.studentId.avatar : undefined
+  }
+
+  const getJobTitle = (application: Application): string => {
+    return application.jobTitle || "Job Title not specified"
+  }
+
+  // Filter applications
+  const filteredApplications = applications.filter(application => {
+    const studentName = getStudentName(application).toLowerCase()
+    const studentEmail = getStudentEmail(application).toLowerCase()
+    const jobTitle = getJobTitle(application).toLowerCase()
+    
     const matchesSearch =
-      applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      applicant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      application.jobTitle.toLowerCase().includes(searchTerm.toLowerCase())
+      studentName.includes(searchTerm.toLowerCase()) ||
+      studentEmail.includes(searchTerm.toLowerCase()) ||
+      jobTitle.includes(searchTerm.toLowerCase())
+    
     const matchesStatus = statusFilter === "all" || application.status === statusFilter
     const matchesJob = jobFilter === "all" || application.jobId === jobFilter
+    
     return matchesSearch && matchesStatus && matchesJob
   })
 
   // Get unique job titles for filter
-  const uniqueJobTitles = Array.from(new Set(flattenedApplications.map(app => app.application.jobTitle)))
+  const uniqueJobTitles = Array.from(new Set(
+    applications.map(app => getJobTitle(app))
+  ))
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="text-muted-foreground">Loading applicants...</span>
+        <span className="text-muted-foreground">Loading applications...</span>
       </div>
     )
   }
@@ -409,42 +421,34 @@ export function ApplicantManagement() {
         </Select>
       </div>
 
-      {usingMockData && (
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardContent className="p-4">
-            <div className="flex items-center text-yellow-800">
-              <span className="text-sm">💡 Using sample data. Real applicant data will appear when backend is configured.</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="grid gap-4">
-        {filteredApplications.map(({ applicant, application, id }) => {
+        {filteredApplications.map((application) => {
           const status = statusConfig[application.status]
+          const studentName = getStudentName(application)
+          const studentRollNo = getStudentRollNo(application)
 
           return (
-            <Card key={id} className="glass-card hover:shadow-lg transition-all duration-200">
+            <Card key={application._id} className="glass-card hover:shadow-lg transition-all duration-200">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12 border-2 border-primary/20">
-                      <AvatarImage src={applicant.avatar} alt={applicant.name} />
+                      <AvatarImage src={getStudentAvatar(application)} alt={studentName} />
                       <AvatarFallback className="bg-primary/10 text-primary">
                         <User className="w-6 h-6" />
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
-                        {applicant.name}
-                        {applicant.rollNo && (
+                        {studentName}
+                        {studentRollNo && (
                           <Badge variant="outline" className="text-xs font-normal">
-                            {applicant.rollNo}
+                            {studentRollNo}
                           </Badge>
                         )}
                       </CardTitle>
                       <CardDescription className="flex items-center gap-2">
-                        Applied for <Badge variant="secondary" className="text-xs">{application.jobTitle}</Badge>
+                        Applied for <Badge variant="secondary" className="text-xs">{getJobTitle(application)}</Badge>
                       </CardDescription>
                     </div>
                   </div>
@@ -459,27 +463,27 @@ export function ApplicantManagement() {
                   <div className="space-y-3">
                     <div className="flex items-center text-sm">
                       <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <span className="truncate">{applicant.email}</span>
+                      <span className="truncate">{getStudentEmail(application)}</span>
                     </div>
                     <div className="flex items-center text-sm">
                       <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
-                      {applicant.phone}
+                      {getStudentPhone(application)}
                     </div>
                     <div className="flex items-center text-sm">
                       <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-                      {applicant.location || "Location not specified"}
+                      {getStudentLocation(application)}
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center text-sm">
                       <GraduationCap className="w-4 h-4 mr-2 text-muted-foreground" />
-                      {applicant.education || applicant.branch || "Education not specified"}
+                      {getStudentEducation(application)}
                     </div>
-                    {applicant.cgpa && (
+                    {getStudentCGPA(application) && (
                       <div className="flex items-center text-sm">
                         <span className="w-4 h-4 mr-2 text-muted-foreground font-bold">GPA</span>
                         <Badge variant="outline" className="bg-accent/10 text-accent">
-                          {applicant.cgpa}/10
+                          {getStudentCGPA(application)}/10
                         </Badge>
                       </div>
                     )}
@@ -490,11 +494,11 @@ export function ApplicantManagement() {
                   </div>
                 </div>
 
-                {applicant.skills && applicant.skills.length > 0 && (
+                {getStudentSkills(application).length > 0 && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">Skills & Technologies:</p>
                     <div className="flex flex-wrap gap-2">
-                      {applicant.skills.map((skill) => (
+                      {getStudentSkills(application).map((skill) => (
                         <Badge key={skill} variant="secondary" className="text-xs">
                           {skill}
                         </Badge>
@@ -507,7 +511,7 @@ export function ApplicantManagement() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => viewStudentProfile(applicant)}
+                    onClick={() => viewStudentProfile(application)}
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     View Profile
@@ -515,19 +519,18 @@ export function ApplicantManagement() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => downloadResume(applicant)}
-                    disabled={!applicant.resume?.url}
+                    onClick={() => downloadResume(application)}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    {applicant.resume?.url ? "Download Resume" : "No Resume"}
+                    Download Resume
                   </Button>
                   <Select 
                     value={application.status}
-                    onValueChange={(value) => updateApplicationStatus(applicant._id, application.jobId, value)}
-                    disabled={updatingStatus === applicant._id}
+                    onValueChange={(value) => updateApplicationStatus(application._id, value)}
+                    disabled={updatingStatus === application._id}
                   >
                     <SelectTrigger className="w-40 h-8">
-                      {updatingStatus === applicant._id ? (
+                      {updatingStatus === application._id ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <SelectValue placeholder="Update Status" />
@@ -554,22 +557,12 @@ export function ApplicantManagement() {
             <div className="mx-auto w-12 h-12 bg-muted rounded-lg flex items-center justify-center mb-4">
               <Search className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h3 className="font-medium mb-2">No applicants found</h3>
+            <h3 className="font-medium mb-2">No applications found</h3>
             <p className="text-sm text-muted-foreground">
               {searchTerm || statusFilter !== "all" || jobFilter !== "all"
                 ? "Try adjusting your search or filters"
                 : "No applications received yet"}
             </p>
-            {usingMockData && (
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={fetchApplicants}
-              >
-                <Loader2 className="w-4 h-4 mr-2" />
-                Retry Connection
-              </Button>
-            )}
           </CardContent>
         </Card>
       )}
