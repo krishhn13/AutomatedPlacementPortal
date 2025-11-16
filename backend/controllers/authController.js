@@ -4,7 +4,7 @@ const Student = require('../models/Student');
 const Company = require('../models/Company');
 const Admin = require('../models/Admin');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 // Student Registration
 exports.registerStudent = async (req, res) => {
@@ -35,17 +35,18 @@ exports.registerStudent = async (req, res) => {
 
     await student.save();
 
-    // Generate JWT token
+    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
-      { userId: student._id, email: student.email, role: 'student' },
+      { id: student._id, role: 'student' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     res.status(201).json({
       token,
-      student: {
+      user: {
         id: student._id,
+        _id: student._id,
         name: student.name,
         email: student.email,
         phone: student.phone,
@@ -57,6 +58,14 @@ exports.registerStudent = async (req, res) => {
 
   } catch (error) {
     console.error('Student registration error:', error);
+    
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: 'Student with this email or roll number already exists' 
+      });
+    }
+    
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -78,17 +87,18 @@ exports.loginStudent = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token
+    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
-      { userId: student._id, email: student.email, role: 'student' },
+      { id: student._id, role: 'student' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     res.json({
       token,
-      student: {
+      user: {
         id: student._id,
+        _id: student._id,
         name: student.name,
         email: student.email,
         phone: student.phone,
@@ -115,10 +125,16 @@ exports.registerCompany = async (req, res) => {
       return res.status(400).json({ message: 'Company already exists with this email' });
     }
 
+    // Check if company name already exists
+    const existingCompanyName = await Company.findOne({ name });
+    if (existingCompanyName) {
+      return res.status(400).json({ message: 'Company with this name already exists' });
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new company - REMOVE any custom id field
+    // Create new company
     const company = new Company({
       name,
       email,
@@ -133,23 +149,26 @@ exports.registerCompany = async (req, res) => {
 
     await company.save();
 
-    // Generate JWT token
+    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
-      { userId: company._id, email: company.email, role: 'company' },
+      { id: company._id, role: 'company' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     res.status(201).json({
       token,
-      company: {
+      user: {
         id: company._id,
+        _id: company._id,
         name: company.name,
         email: company.email,
         phone: company.phone,
         website: company.website,
         location: company.location,
         industry: company.industry,
+        description: company.description,
+        employeeCount: company.employeeCount,
         role: 'company'
       }
     });
@@ -157,10 +176,10 @@ exports.registerCompany = async (req, res) => {
   } catch (error) {
     console.error('Company registration error:', error);
     
-    // Handle duplicate key error specifically
+    // Handle duplicate key error
     if (error.code === 11000) {
       return res.status(400).json({ 
-        message: 'Company with this email already exists' 
+        message: 'Company with this email or name already exists' 
       });
     }
     
@@ -185,23 +204,26 @@ exports.loginCompany = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token
+    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
-      { userId: company._id, email: company.email, role: 'company' },
+      { id: company._id, role: 'company' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     res.json({
       token,
-      company: {
+      user: {
         id: company._id,
+        _id: company._id,
         name: company.name,
         email: company.email,
         phone: company.phone,
         website: company.website,
         location: company.location,
         industry: company.industry,
+        description: company.description,
+        employeeCount: company.employeeCount,
         role: 'company'
       }
     });
@@ -237,17 +259,18 @@ exports.registerAdmin = async (req, res) => {
 
     await admin.save();
 
-    // Generate JWT token
+    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
-      { userId: admin._id, email: admin.email, role: 'admin' },
+      { id: admin._id, role: 'admin' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     res.status(201).json({
       token,
-      admin: {
+      user: {
         id: admin._id,
+        _id: admin._id,
         name: admin.name,
         email: admin.email,
         phone: admin.phone,
@@ -258,6 +281,14 @@ exports.registerAdmin = async (req, res) => {
 
   } catch (error) {
     console.error('Admin registration error:', error);
+    
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: 'Admin with this email already exists' 
+      });
+    }
+    
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -279,17 +310,18 @@ exports.loginAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token
+    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
-      { userId: admin._id, email: admin.email, role: 'admin' },
+      { id: admin._id, role: 'admin' },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     res.json({
       token,
-      admin: {
+      user: {
         id: admin._id,
+        _id: admin._id,
         name: admin.name,
         email: admin.email,
         phone: admin.phone,
@@ -301,5 +333,135 @@ exports.loginAdmin = async (req, res) => {
   } catch (error) {
     console.error('Admin login error:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Get current user profile
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const user = req.user; // From auth middleware
+    const role = req.role; // From auth middleware
+
+    res.json({
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: role,
+        ...(role === 'student' && {
+          phone: user.phone,
+          rollNo: user.rollNo,
+          branch: user.branch,
+          cgpa: user.cgpa,
+          skills: user.skills,
+          backlogs: user.backlogs
+        }),
+        ...(role === 'company' && {
+          phone: user.phone,
+          website: user.website,
+          location: user.location,
+          industry: user.industry,
+          description: user.description,
+          employeeCount: user.employeeCount
+        }),
+        ...(role === 'admin' && {
+          phone: user.phone,
+          department: user.department
+        })
+      }
+    });
+
+  } catch (error) {
+    console.error('Get current user error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Change password
+exports.changePassword = async (req, res) => {
+  try {
+    const user = req.user; // From auth middleware
+    const role = req.role; // From auth middleware
+    const { currentPassword, newPassword } = req.body;
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.json({ message: 'Password changed successfully' });
+
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Verify token
+exports.verifyToken = async (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    let user;
+    switch (decoded.role) {
+      case 'student':
+        user = await Student.findById(decoded.id).select('-password');
+        break;
+      case 'company':
+        user = await Company.findById(decoded.id).select('-password');
+        break;
+      case 'admin':
+        user = await Admin.findById(decoded.id).select('-password');
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid user role' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      valid: true,
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: decoded.role,
+        ...(decoded.role === 'student' && {
+          phone: user.phone,
+          rollNo: user.rollNo,
+          branch: user.branch
+        }),
+        ...(decoded.role === 'company' && {
+          phone: user.phone,
+          website: user.website,
+          location: user.location,
+          industry: user.industry
+        }),
+        ...(decoded.role === 'admin' && {
+          phone: user.phone,
+          department: user.department
+        })
+      }
+    });
+
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.json({ valid: false, message: 'Invalid token' });
   }
 };

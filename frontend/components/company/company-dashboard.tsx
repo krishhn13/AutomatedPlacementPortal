@@ -57,14 +57,11 @@ export function CompanyDashboard() {
         throw new Error("No authentication token found")
       }
 
+      // Get user data from localStorage
       const userData = JSON.parse(localStorage.getItem("userData") || "{}")
-      const companyId = userData.id || userData._id || userData.companyId
-
-      if (!companyId) {
-        throw new Error("Company ID not found in user data")
-      }
-
-      await fetchCompanyById(companyId)
+      
+      // Try to fetch company profile and stats
+      await fetchCompanyProfile()
       await fetchDashboardStats()
       
     } catch (error) {
@@ -74,16 +71,18 @@ export function CompanyDashboard() {
         description: "Failed to load dashboard data",
         variant: "destructive",
       })
+      
+      // Set fallback company data
       setFallbackCompanyData()
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchCompanyById = async (companyId: string) => {
+  const fetchCompanyProfile = async () => {
     try {
       const token = localStorage.getItem("token")
-      const res = await fetch(`http://localhost:5000/api/companies/${companyId}`, {
+      const res = await fetch(`http://localhost:5000/api/company/profile/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -93,67 +92,10 @@ export function CompanyDashboard() {
         const data = await res.json()
         setCompany(data.data || data)
       } else {
-        await tryAlternativeCompanyEndpoints(companyId)
+        throw new Error("Failed to fetch company profile")
       }
     } catch (error) {
-      console.error("Error fetching company by ID:", error)
-      throw error
-    }
-  }
-
-  const tryAlternativeCompanyEndpoints = async (companyId: string) => {
-    const token = localStorage.getItem("token")
-    const userData = JSON.parse(localStorage.getItem("userData") || "{}")
-    
-    const endpoints = [
-      `http://localhost:5000/api/company/${companyId}`,
-      `http://localhost:5000/api/companies/${companyId}`,
-      `http://localhost:5000/api/company/profile`,
-      `http://localhost:5000/api/company/me`
-    ]
-
-    for (const endpoint of endpoints) {
-      try {
-        const res = await fetch(endpoint, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (res.ok) {
-          const data = await res.json()
-          setCompany(data.data || data.company || data)
-          return
-        }
-      } catch (error) {
-        console.log(`Endpoint ${endpoint} failed:`, error)
-      }
-    }
-
-    if (userData.name) {
-      await fetchCompanyByName(userData.name)
-    } else {
-      throw new Error("Could not fetch company data from any endpoint")
-    }
-  }
-
-  const fetchCompanyByName = async (companyName: string) => {
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch(`http://localhost:5000/api/company/${encodeURIComponent(companyName)}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setCompany(data.data || data)
-      } else {
-        throw new Error("Company not found by name")
-      }
-    } catch (error) {
-      console.error("Error fetching company by name:", error)
+      console.error("Error fetching company profile:", error)
       throw error
     }
   }
@@ -163,9 +105,8 @@ export function CompanyDashboard() {
       const token = localStorage.getItem("token")
       
       const endpoints = [
-        'http://localhost:5000/api/company/stats',
         'http://localhost:5000/api/company/dashboard/stats',
-        'http://localhost:5000/api/company/overview'
+        'http://localhost:5000/api/company/stats',
       ]
 
       for (const endpoint of endpoints) {
@@ -186,6 +127,7 @@ export function CompanyDashboard() {
         }
       }
 
+      // If no stats endpoints work, set default stats
       setStats({
         totalJobs: 0,
         activeJobs: 0,
@@ -272,6 +214,7 @@ export function CompanyDashboard() {
       <CompanyNavbar company={company} onRefresh={handleRefresh} />
 
       <div className="container mx-auto px-4 py-8">
+        {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-2">
@@ -327,6 +270,7 @@ export function CompanyDashboard() {
           </Button>
         </div>
 
+        {/* Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="glass p-1 h-auto w-full max-w-md">
             <TabsTrigger
@@ -382,6 +326,7 @@ export function CompanyDashboard() {
           </TabsContent>
         </Tabs>
 
+        {/* Job Posting Modal */}
         {showJobForm && (
           <JobPostingForm 
             company={company}

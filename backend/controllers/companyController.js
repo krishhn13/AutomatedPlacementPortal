@@ -1,9 +1,9 @@
 const companyModel = require("../models/Company")
-const jobModel = require("../models/Job") // You'll need to create this
-const applicationModel = require("../models/Application") // You'll need to create this
+const jobModel = require("../models/Job")
+const applicationModel = require("../models/Application")
 const studentModel = require("../models/Student")
 
-// Existing methods
+// Get all companies
 const getAll = async (req, res) => {
     try {
         return res.status(200).json({"data": await companyModel.find()});
@@ -12,6 +12,7 @@ const getAll = async (req, res) => {
     }
 }
 
+// Add company
 const addCompany = async(req, res) => {
     try{
         const { name } = req.body;
@@ -28,6 +29,7 @@ const addCompany = async(req, res) => {
     }
 }
 
+// Get company by name
 const getByName = async (req, res) => {
     try {
         const { name } = req.params;
@@ -39,6 +41,7 @@ const getByName = async (req, res) => {
     } 
 }
 
+// Update company
 const updateCompany = async (req, res) => {
     try {
         const { name } = req.params;
@@ -60,6 +63,7 @@ const updateCompany = async (req, res) => {
     }
 }
 
+// Delete company
 const deleteCompany = async(req, res) => {
     try{
         const {name} = req.params;
@@ -74,87 +78,112 @@ const deleteCompany = async(req, res) => {
     }
 }
 
-// NEW METHODS FOR APPLICANT MANAGEMENT
-
-// Get all applicants for company's jobs
-const getApplicants = async (req, res) => {
+// Get company profile for dashboard
+const getCompanyProfile = async (req, res) => {
     try {
-        const companyId = req.user._id; // From auth middleware
+        const companyId = req.user.userId;
         
-        // First, check if Job model exists to avoid errors
-        let companyJobs = [];
-        try {
-            companyJobs = await jobModel.find({ companyId: companyId });
-        } catch (jobError) {
-            console.log("Job model not available yet:", jobError.message);
-            // Return empty array if Job model doesn't exist
-            return res.status(200).json({ applicants: [] });
+        const company = await companyModel.findById(companyId);
+        if (!company) {
+            return res.status(404).json({ message: "Company not found" });
         }
-        
-        const jobIds = companyJobs.map(job => job._id);
-        
-        // If no jobs, return empty array
-        if (jobIds.length === 0) {
-            return res.status(200).json({ applicants: [] });
-        }
-        
-        // Try to find applications
-        let applications = [];
-        try {
-            applications = await applicationModel.find({ jobId: { $in: jobIds } })
-                .populate('studentId')
-                .populate('jobId');
-        } catch (appError) {
-            console.log("Application model not available yet:", appError.message);
-            return res.status(200).json({ applicants: [] });
-        }
-        
-        // Format the response
-        const formattedApplicants = applications.map(app => {
-            const student = app.studentId;
-            const job = app.jobId;
-            
-            return {
-                _id: student._id,
-                name: student.name,
-                email: student.email,
-                phone: student.phone,
-                location: student.location,
-                education: student.education,
-                branch: student.branch,
-                cgpa: student.cgpa,
-                rollNo: student.rollNo,
-                skills: student.skills || [],
-                resume: student.resume,
-                avatar: student.avatar,
-                appliedJobs: [{
-                    jobId: job._id,
-                    jobTitle: job.title,
-                    companyId: job.companyId,
-                    companyName: job.companyName,
-                    appliedDate: app.appliedDate,
-                    status: app.status,
-                    resume: app.resume
-                }]
-            };
-        });
-        
-        return res.status(200).json({ applicants: formattedApplicants });
+
+        // Return company data without password
+        const companyData = {
+            _id: company._id,
+            name: company.name,
+            email: company.email,
+            phone: company.phone,
+            website: company.website,
+            location: company.location,
+            industry: company.industry,
+            description: company.description,
+            employeeCount: company.employeeCount,
+            jobs: company.jobs || [],
+            createdAt: company.createdAt,
+            updatedAt: company.updatedAt
+        };
+
+        return res.status(200).json({ data: companyData });
     } catch (err) {
-        console.error("Error fetching applicants:", err);
-        // Return empty array instead of error for better frontend experience
-        return res.status(200).json({ applicants: [] });
+        console.error("Error fetching company profile:", err);
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+// Get dashboard stats
+const getDashboardStats = async (req, res) => {
+    try {
+        const companyId = req.user.userId;
+
+        // Get job stats
+        let totalJobs = 0;
+        let activeJobs = 0;
+        try {
+            totalJobs = await jobModel.countDocuments({ companyId: companyId });
+            activeJobs = await jobModel.countDocuments({ 
+                companyId: companyId, 
+                status: 'active' 
+            });
+        } catch (jobError) {
+            console.log("Job model not available yet");
+        }
+
+        // Get application stats
+        let totalApplications = 0;
+        let pendingApplications = 0;
+        let hiredCount = 0;
+        
+        try {
+            const companyJobs = await jobModel.find({ companyId: companyId });
+            const jobIds = companyJobs.map(job => job._id);
+            
+            if (jobIds.length > 0) {
+                totalApplications = await applicationModel.countDocuments({ 
+                    jobId: { $in: jobIds } 
+                });
+                pendingApplications = await applicationModel.countDocuments({ 
+                    jobId: { $in: jobIds },
+                    status: 'pending' 
+                });
+                hiredCount = await applicationModel.countDocuments({ 
+                    jobId: { $in: jobIds },
+                    status: 'accepted' 
+                });
+            }
+        } catch (appError) {
+            console.log("Application model not available yet");
+        }
+
+        res.json({
+            totalJobs,
+            activeJobs,
+            totalApplications,
+            pendingApplications,
+            hiredCount
+        });
+    } catch (err) {
+        console.error("Error fetching dashboard stats:", err);
+        res.status(500).json({ message: "Error fetching dashboard stats" });
     }
 }
 
 // Get company's jobs
 const getCompanyJobs = async (req, res) => {
     try {
-        const companyId = req.user._id; // From auth middleware
+        const companyId = req.user.userId;
+        const { limit, page } = req.query;
         
         let jobs = [];
         try {
-            jobs = await jobModel.find({ companyId: companyId });
+            const query = { companyId: companyId };
+            let jobsQuery = jobModel.find(query).sort({ createdAt: -1 });
+            
+            if (limit) {
+                jobsQuery = jobsQuery.limit(parseInt(limit));
+            }
+            
+            jobs = await jobsQuery;
         } catch (error) {
             console.log("Job model not available yet:", error.message);
         }
@@ -166,29 +195,87 @@ const getCompanyJobs = async (req, res) => {
     }
 }
 
+// Get all applicants for company's jobs
+const getApplicants = async (req, res) => {
+    try {
+        const companyId = req.user.userId;
+        
+        let companyJobs = [];
+        try {
+            companyJobs = await jobModel.find({ companyId: companyId });
+        } catch (jobError) {
+            console.log("Job model not available yet:", jobError.message);
+            return res.status(200).json({ applicants: [] });
+        }
+        
+        const jobIds = companyJobs.map(job => job._id);
+        
+        if (jobIds.length === 0) {
+            return res.status(200).json({ applicants: [] });
+        }
+        
+        let applications = [];
+        try {
+            applications = await applicationModel.find({ jobId: { $in: jobIds } })
+                .populate('studentId')
+                .populate('jobId');
+        } catch (appError) {
+            console.log("Application model not available yet:", appError.message);
+            return res.status(200).json({ applicants: [] });
+        }
+        
+        const formattedApplicants = applications.map(app => {
+            const student = app.studentId;
+            const job = app.jobId;
+            
+            return {
+                applicationId: app._id,
+                studentId: student._id,
+                name: student.name,
+                email: student.email,
+                phone: student.phone,
+                branch: student.branch,
+                cgpa: student.cgpa,
+                rollNo: student.rollNo,
+                skills: student.skills || [],
+                resume: student.resume,
+                jobId: job._id,
+                jobTitle: job.title,
+                appliedDate: app.appliedDate,
+                status: app.status
+            };
+        });
+        
+        return res.status(200).json({ applicants: formattedApplicants });
+    } catch (err) {
+        console.error("Error fetching applicants:", err);
+        return res.status(200).json({ applicants: [] });
+    }
+}
+
 // Update application status
 const updateApplicationStatus = async (req, res) => {
     try {
         const { applicationId } = req.params;
-        const { status, jobId } = req.body;
-        const companyId = req.user._id;
+        const { status } = req.body;
+        const companyId = req.user.userId;
         
-        // Verify the job belongs to the company
-        const job = await jobModel.findOne({ _id: jobId, companyId: companyId });
-        if (!job) {
-            return res.status(404).json({ message: "Job not found or access denied" });
-        }
-        
-        // Update the application status
-        const application = await applicationModel.findOneAndUpdate(
-            { _id: applicationId, jobId: jobId },
-            { status: status },
-            { new: true }
-        );
+        // Find the application and verify it belongs to company's job
+        const application = await applicationModel.findById(applicationId)
+            .populate('jobId');
         
         if (!application) {
             return res.status(404).json({ message: "Application not found" });
         }
+        
+        // Verify the job belongs to the company
+        if (application.jobId.companyId.toString() !== companyId.toString()) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        
+        // Update the application status
+        application.status = status;
+        await application.save();
         
         return res.status(200).json({ 
             message: "Application status updated successfully", 
@@ -204,9 +291,11 @@ module.exports = {
     getAll,
     getByName,
     addCompany,
-    updateCompany, // This was missing - causing the error
+    updateCompany,
     deleteCompany,
     getApplicants,
     getCompanyJobs,
-    updateApplicationStatus
+    updateApplicationStatus,
+    getCompanyProfile,
+    getDashboardStats
 }
