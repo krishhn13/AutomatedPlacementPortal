@@ -78,12 +78,11 @@ const deleteCompany = async(req, res) => {
     }
 }
 
-// Get company profile for dashboard
+// Get company profile for dashboard - UPDATED FOR YOUR MIDDLEWARE
 const getCompanyProfile = async (req, res) => {
     try {
-        const companyId = req.user.userId;
+        const company = req.user; // From auth middleware
         
-        const company = await companyModel.findById(companyId);
         if (!company) {
             return res.status(404).json({ message: "Company not found" });
         }
@@ -111,10 +110,10 @@ const getCompanyProfile = async (req, res) => {
     }
 }
 
-// Get dashboard stats
+// Get dashboard stats - UPDATED FOR YOUR MIDDLEWARE
 const getDashboardStats = async (req, res) => {
     try {
-        const companyId = req.user.userId;
+        const companyId = req.user._id; // From auth middleware
 
         // Get job stats
         let totalJobs = 0;
@@ -168,10 +167,10 @@ const getDashboardStats = async (req, res) => {
     }
 }
 
-// Get company's jobs
+// Get company's jobs - UPDATED FOR YOUR MIDDLEWARE
 const getCompanyJobs = async (req, res) => {
     try {
-        const companyId = req.user.userId;
+        const companyId = req.user._id; // From auth middleware
         const { limit, page } = req.query;
         
         let jobs = [];
@@ -195,10 +194,10 @@ const getCompanyJobs = async (req, res) => {
     }
 }
 
-// Get all applicants for company's jobs
+// Get all applicants for company's jobs - UPDATED FOR YOUR MIDDLEWARE
 const getApplicants = async (req, res) => {
     try {
-        const companyId = req.user.userId;
+        const companyId = req.user._id; // From auth middleware
         
         let companyJobs = [];
         try {
@@ -253,12 +252,12 @@ const getApplicants = async (req, res) => {
     }
 }
 
-// Update application status
+// Update application status - UPDATED FOR YOUR MIDDLEWARE
 const updateApplicationStatus = async (req, res) => {
     try {
         const { applicationId } = req.params;
         const { status } = req.body;
-        const companyId = req.user.userId;
+        const companyId = req.user._id; // From auth middleware
         
         // Find the application and verify it belongs to company's job
         const application = await applicationModel.findById(applicationId)
@@ -287,6 +286,79 @@ const updateApplicationStatus = async (req, res) => {
     }
 }
 
+// Get company by ID - NEW METHOD
+const getCompanyById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const company = await companyModel.findById(id);
+        if (!company) {
+            return res.status(404).json({ message: "Company not found" });
+        }
+
+        // Return company data without password
+        const companyData = {
+            _id: company._id,
+            name: company.name,
+            email: company.email,
+            phone: company.phone,
+            website: company.website,
+            location: company.location,
+            industry: company.industry,
+            description: company.description,
+            employeeCount: company.employeeCount,
+            jobs: company.jobs || [],
+            createdAt: company.createdAt,
+            updatedAt: company.updatedAt
+        };
+
+        return res.status(200).json({ data: companyData });
+    } catch (err) {
+        console.error("Error fetching company by ID:", err);
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+// Update company profile - NEW METHOD
+const updateCompanyProfile = async (req, res) => {
+    try {
+        const company = req.user; // From auth middleware
+        const updates = req.body;
+
+        // Remove fields that shouldn't be updated
+        delete updates.password;
+        delete updates.email;
+        delete updates._id;
+        delete updates.id;
+
+        Object.assign(company, updates);
+        const updatedCompany = await company.save();
+
+        // Return updated company data without password
+        const companyData = {
+            _id: updatedCompany._id,
+            name: updatedCompany.name,
+            email: updatedCompany.email,
+            phone: updatedCompany.phone,
+            website: updatedCompany.website,
+            location: updatedCompany.location,
+            industry: updatedCompany.industry,
+            description: updatedCompany.description,
+            employeeCount: updatedCompany.employeeCount,
+            jobs: updatedCompany.jobs || [],
+            createdAt: updatedCompany.createdAt,
+            updatedAt: updatedCompany.updatedAt
+        };
+
+        return res.status(200).json({ 
+            message: "Company profile updated successfully", 
+            data: companyData 
+        });
+    } catch (err) {
+        console.error("Error updating company profile:", err);
+        return res.status(500).json({ message: err.message });
+    }
+}
+
 module.exports = {
     getAll,
     getByName,
@@ -297,5 +369,7 @@ module.exports = {
     getCompanyJobs,
     updateApplicationStatus,
     getCompanyProfile,
-    getDashboardStats
+    getDashboardStats,
+    getCompanyById,
+    updateCompanyProfile
 }
