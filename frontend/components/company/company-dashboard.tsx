@@ -57,7 +57,6 @@ export function CompanyDashboard() {
         throw new Error("No authentication token found")
       }
 
-      // Get user data from localStorage (set during login)
       const userData = JSON.parse(localStorage.getItem("userData") || "{}")
       const companyId = userData.id || userData._id || userData.companyId
 
@@ -65,10 +64,7 @@ export function CompanyDashboard() {
         throw new Error("Company ID not found in user data")
       }
 
-      // Fetch company details using the company ID from auth
       await fetchCompanyById(companyId)
-      
-      // Fetch dashboard stats
       await fetchDashboardStats()
       
     } catch (error) {
@@ -78,8 +74,6 @@ export function CompanyDashboard() {
         description: "Failed to load dashboard data",
         variant: "destructive",
       })
-      
-      // Set fallback company data from localStorage
       setFallbackCompanyData()
     } finally {
       setLoading(false)
@@ -99,7 +93,6 @@ export function CompanyDashboard() {
         const data = await res.json()
         setCompany(data.data || data)
       } else {
-        // Try alternative endpoints
         await tryAlternativeCompanyEndpoints(companyId)
       }
     } catch (error) {
@@ -112,7 +105,6 @@ export function CompanyDashboard() {
     const token = localStorage.getItem("token")
     const userData = JSON.parse(localStorage.getItem("userData") || "{}")
     
-    // Try different endpoint variations
     const endpoints = [
       `http://localhost:5000/api/company/${companyId}`,
       `http://localhost:5000/api/companies/${companyId}`,
@@ -138,7 +130,6 @@ export function CompanyDashboard() {
       }
     }
 
-    // If all endpoints fail, try fetching by company name
     if (userData.name) {
       await fetchCompanyByName(userData.name)
     } else {
@@ -171,7 +162,6 @@ export function CompanyDashboard() {
     try {
       const token = localStorage.getItem("token")
       
-      // Try multiple stats endpoints
       const endpoints = [
         'http://localhost:5000/api/company/stats',
         'http://localhost:5000/api/company/dashboard/stats',
@@ -196,7 +186,6 @@ export function CompanyDashboard() {
         }
       }
 
-      // If no stats endpoints work, set default stats
       setStats({
         totalJobs: 0,
         activeJobs: 0,
@@ -241,9 +230,7 @@ export function CompanyDashboard() {
 
   const handleJobCreated = () => {
     setShowJobForm(false)
-    // Refresh all data
     fetchDashboardData()
-    
     toast({
       title: "Success",
       description: "Job posted successfully",
@@ -253,7 +240,6 @@ export function CompanyDashboard() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
-    // Refresh data when switching to certain tabs
     if (tab === "overview" || tab === "jobs") {
       fetchDashboardData()
     }
@@ -283,11 +269,9 @@ export function CompanyDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/10">
-      {/* CompanyNavbar with proper props */}
       <CompanyNavbar company={company} onRefresh={handleRefresh} />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-2">
@@ -343,7 +327,6 @@ export function CompanyDashboard() {
           </Button>
         </div>
 
-        {/* Dashboard Tabs - Fixed Structure */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="glass p-1 h-auto w-full max-w-md">
             <TabsTrigger
@@ -399,7 +382,6 @@ export function CompanyDashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Job Posting Modal */}
         {showJobForm && (
           <JobPostingForm 
             company={company}

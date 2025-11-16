@@ -59,7 +59,7 @@ const statConfigs = [
   {
     title: "Active Job Postings",
     key: "activeJobs" as keyof DashboardStats,
-    changeKey: "jobs" as keyof any,
+    changeKey: "jobs" as keyof DashboardStats["weeklyChange"],
     icon: Briefcase,
     color: "text-blue-600",
     bgColor: "bg-blue-500/10"
@@ -67,7 +67,7 @@ const statConfigs = [
   {
     title: "Total Applications",
     key: "totalApplications" as keyof DashboardStats,
-    changeKey: "applications" as keyof any,
+    changeKey: "applications" as keyof DashboardStats["weeklyChange"],
     icon: Users,
     color: "text-purple-600",
     bgColor: "bg-purple-500/10"
@@ -75,7 +75,7 @@ const statConfigs = [
   {
     title: "Interviews Scheduled",
     key: "interviewsScheduled" as keyof DashboardStats,
-    changeKey: "interviews" as keyof any,
+    changeKey: "interviews" as keyof DashboardStats["weeklyChange"],
     icon: Clock,
     color: "text-orange-600",
     bgColor: "bg-orange-500/10"
@@ -83,7 +83,7 @@ const statConfigs = [
   {
     title: "Successful Hires",
     key: "hiredCount" as keyof DashboardStats,
-    changeKey: "hires" as keyof any,
+    changeKey: "hires" as keyof DashboardStats["weeklyChange"],
     icon: UserCheck,
     color: "text-green-600",
     bgColor: "bg-green-500/10"
@@ -208,15 +208,15 @@ export function CompanyOverview({ company, stats }: CompanyOverviewProps) {
     return `${Math.ceil(diffDays / 30)} months ago`
   }
 
-  const getChangeText = (statKey: string): string => {
+  const getChangeText = (statKey: keyof DashboardStats["weeklyChange"] | string): string => {
     if (!stats?.weeklyChange) {
       // Generate random change for demo
       const changes = ["+3 this month", "+45 this week", "+8 this week", "+2 this month"]
       return changes[Math.floor(Math.random() * changes.length)]
     }
 
-    const change = stats.weeklyChange[statKey as keyof typeof stats.weeklyChange]
-    if (!change) return "No change"
+    const change = stats.weeklyChange?.[statKey as keyof typeof stats.weeklyChange]
+    if (change === undefined || change === null) return "No change"
 
     const trend = change > 0 ? "+" : ""
     const period = statKey === "jobs" || statKey === "hires" ? "this month" : "this week"
