@@ -6,22 +6,18 @@ const Admin = require('../models/Admin');
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-// Student Registration - CORRECTED
+// Student Registration
 exports.registerStudent = async (req, res) => {
   try {
-    // Add 'year' and 'location' to the destructuring
     const { name, email, password, phone, rollNo, branch, year, location, cgpa, skills, backlogs } = req.body;
 
-    // Debug log to see what's coming in
     console.log('Student Registration request body:', req.body);
 
-    // Check if student already exists
     const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
       return res.status(400).json({ message: 'Student already exists with this email' });
     }
 
-    // Validate required fields
     if (!year) {
       return res.status(400).json({ message: 'Year field is required' });
     }
@@ -30,10 +26,8 @@ exports.registerStudent = async (req, res) => {
       return res.status(400).json({ message: 'Location field is required' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new student - ADD year and location
     const student = new Student({
       name,
       email,
@@ -41,8 +35,8 @@ exports.registerStudent = async (req, res) => {
       phone,
       rollNo,
       branch,
-      year: year.toString().trim(),  // Add this
-      location: location.toString().trim(),  // Add this
+      year: year.toString().trim(),
+      location: location.toString().trim(),
       cgpa: cgpa ? parseFloat(cgpa) : null,
       skills: skills || [],
       backlogs: backlogs || 0,
@@ -52,7 +46,6 @@ exports.registerStudent = async (req, res) => {
 
     await student.save();
 
-    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
       { id: student._id, role: 'student' },
       JWT_SECRET,
@@ -69,8 +62,8 @@ exports.registerStudent = async (req, res) => {
         phone: student.phone,
         rollNo: student.rollNo,
         branch: student.branch,
-        year: student.year,  // Add this
-        location: student.location,  // Add this
+        year: student.year,
+        location: student.location,
         cgpa: student.cgpa,
         skills: student.skills,
         backlogs: student.backlogs,
@@ -81,14 +74,12 @@ exports.registerStudent = async (req, res) => {
   } catch (error) {
     console.error('Student registration error:', error);
     
-    // Handle duplicate key error
     if (error.code === 11000) {
       return res.status(400).json({ 
         message: 'Student with this email or roll number already exists' 
       });
     }
     
-    // Handle validation errors
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({ 
@@ -106,19 +97,16 @@ exports.loginStudent = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find student
     const student = await Student.findOne({ email });
     if (!student) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, student.password);
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
       { id: student._id, role: 'student' },
       JWT_SECRET,
@@ -135,8 +123,8 @@ exports.loginStudent = async (req, res) => {
         phone: student.phone,
         rollNo: student.rollNo,
         branch: student.branch,
-        year: student.year,  // Add this
-        location: student.location,  // Add this
+        year: student.year,
+        location: student.location,
         cgpa: student.cgpa,
         skills: student.skills,
         backlogs: student.backlogs,
@@ -155,22 +143,18 @@ exports.registerCompany = async (req, res) => {
   try {
     const { name, email, password, phone, website, location, industry, description, employeeCount } = req.body;
 
-    // Check if company already exists
     const existingCompany = await Company.findOne({ email });
     if (existingCompany) {
       return res.status(400).json({ message: 'Company already exists with this email' });
     }
 
-    // Check if company name already exists
     const existingCompanyName = await Company.findOne({ name });
     if (existingCompanyName) {
       return res.status(400).json({ message: 'Company with this name already exists' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new company
     const company = new Company({
       name,
       email,
@@ -185,7 +169,6 @@ exports.registerCompany = async (req, res) => {
 
     await company.save();
 
-    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
       { id: company._id, role: 'company' },
       JWT_SECRET,
@@ -212,7 +195,6 @@ exports.registerCompany = async (req, res) => {
   } catch (error) {
     console.error('Company registration error:', error);
     
-    // Handle duplicate key error
     if (error.code === 11000) {
       return res.status(400).json({ 
         message: 'Company with this email or name already exists' 
@@ -228,19 +210,16 @@ exports.loginCompany = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find company
     const company = await Company.findOne({ email });
     if (!company) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, company.password);
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
       { id: company._id, role: 'company' },
       JWT_SECRET,
@@ -275,16 +254,13 @@ exports.registerAdmin = async (req, res) => {
   try {
     const { name, email, password, phone, department } = req.body;
 
-    // Check if admin already exists
     const existingAdmin = await Admin.findOne({ email });
     if (existingAdmin) {
       return res.status(400).json({ message: 'Admin already exists with this email' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new admin
     const admin = new Admin({
       name,
       email,
@@ -295,7 +271,6 @@ exports.registerAdmin = async (req, res) => {
 
     await admin.save();
 
-    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
       { id: admin._id, role: 'admin' },
       JWT_SECRET,
@@ -318,7 +293,6 @@ exports.registerAdmin = async (req, res) => {
   } catch (error) {
     console.error('Admin registration error:', error);
     
-    // Handle duplicate key error
     if (error.code === 11000) {
       return res.status(400).json({ 
         message: 'Admin with this email already exists' 
@@ -334,19 +308,16 @@ exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find admin
     const admin = await Admin.findOne({ email });
     if (!admin) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, admin.password);
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token (matches your middleware structure)
     const token = jwt.sign(
       { id: admin._id, role: 'admin' },
       JWT_SECRET,
@@ -375,8 +346,8 @@ exports.loginAdmin = async (req, res) => {
 // Get current user profile
 exports.getCurrentUser = async (req, res) => {
   try {
-    const user = req.user; // From auth middleware
-    const role = req.role; // From auth middleware
+    const user = req.user;
+    const role = req.role;
 
     res.json({
       user: {
@@ -419,17 +390,15 @@ exports.getCurrentUser = async (req, res) => {
 // Change password
 exports.changePassword = async (req, res) => {
   try {
-    const user = req.user; // From auth middleware
-    const role = req.role; // From auth middleware
+    const user = req.user;
+    const role = req.role;
     const { currentPassword, newPassword } = req.body;
 
-    // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isCurrentPasswordValid) {
       return res.status(400).json({ message: 'Current password is incorrect' });
     }
 
-    // Hash new password
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedNewPassword;
     await user.save();

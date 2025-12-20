@@ -1,14 +1,14 @@
-const companyModel = require("../models/Company")
-const jobModel = require("../models/Job")
-const applicationModel = require("../models/Application")
-const studentModel = require("../models/Student")
+const companyModel = require("../models/Company");
+const jobModel = require("../models/Job");
+const applicationModel = require("../models/Application");
+const studentModel = require("../models/Student");
 
 // Get all companies
 const getAll = async (req, res) => {
     try {
         return res.status(200).json({"data": await companyModel.find()});
     } catch(err) {
-        res.status(500).json({message:err.message})
+        res.status(500).json({message:err.message});
     }
 }
 
@@ -25,7 +25,7 @@ const addCompany = async(req, res) => {
         const saved = await company.save();
         return res.status(201).json({ data: saved });
     } catch(err) {
-        res.status(500).json({message:err.message})
+        res.status(500).json({message:err.message});
     }
 }
 
@@ -67,27 +67,26 @@ const updateCompany = async (req, res) => {
 const deleteCompany = async(req, res) => {
     try{
         const {name} = req.params;
-        const isThere = await companyModel.findOne({name})
+        const isThere = await companyModel.findOne({name});
         if(!isThere) return res.status(404).json({
             message : "COMPANY NOT FOUND"
-        })
+        });
         await companyModel.deleteOne({name});
-        return res.status(200).json({message:"Company removed successfully"})
+        return res.status(200).json({message:"Company removed successfully"});
     } catch(err) {
-        return res.status(500).json({message:err.message})
+        return res.status(500).json({message:err.message});
     }
 }
 
-// Get company profile for dashboard - UPDATED FOR YOUR MIDDLEWARE
+// Get company profile for dashboard
 const getCompanyProfile = async (req, res) => {
     try {
-        const company = req.user; // From auth middleware
+        const company = req.user;
         
         if (!company) {
             return res.status(404).json({ message: "Company not found" });
         }
 
-        // Return company data without password
         const companyData = {
             _id: company._id,
             name: company.name,
@@ -110,25 +109,28 @@ const getCompanyProfile = async (req, res) => {
     }
 }
 
-// Get dashboard stats - UPDATED FOR YOUR MIDDLEWARE
+// Get dashboard stats
 const getDashboardStats = async (req, res) => {
     try {
-        const companyId = req.user._id; // From auth middleware
+        const companyId = req.user._id;
+        
+        console.log("Fetching stats for company:", companyId);
 
-        // Get job stats
         let totalJobs = 0;
         let activeJobs = 0;
+        
         try {
             totalJobs = await jobModel.countDocuments({ companyId: companyId });
             activeJobs = await jobModel.countDocuments({ 
                 companyId: companyId, 
                 status: 'active' 
             });
+            
+            console.log("Job stats - Total:", totalJobs, "Active:", activeJobs);
         } catch (jobError) {
-            console.log("Job model not available yet");
+            console.error("Job stats error:", jobError.message);
         }
 
-        // Get application stats
         let totalApplications = 0;
         let pendingApplications = 0;
         let hiredCount = 0;
@@ -136,6 +138,8 @@ const getDashboardStats = async (req, res) => {
         try {
             const companyJobs = await jobModel.find({ companyId: companyId });
             const jobIds = companyJobs.map(job => job._id);
+            
+            console.log("Found job IDs for applications:", jobIds.length);
             
             if (jobIds.length > 0) {
                 totalApplications = await applicationModel.countDocuments({ 
@@ -149,59 +153,130 @@ const getDashboardStats = async (req, res) => {
                     jobId: { $in: jobIds },
                     status: 'accepted' 
                 });
+                
+                console.log("Application stats - Total:", totalApplications, "Pending:", pendingApplications, "Hired:", hiredCount);
             }
         } catch (appError) {
-            console.log("Application model not available yet");
+            console.error("Application stats error:", appError.message);
         }
 
-        res.json({
+        const stats = {
             totalJobs,
             activeJobs,
             totalApplications,
             pendingApplications,
             hiredCount
+        };
+        
+        console.log("Final stats object:", stats);
+        
+        res.json({
+            success: true,
+            stats: stats
         });
     } catch (err) {
         console.error("Error fetching dashboard stats:", err);
-        res.status(500).json({ message: "Error fetching dashboard stats" });
+        res.status(500).json({ 
+            success: false,
+            message: "Error fetching dashboard stats",
+            stats: {
+                totalJobs: 0,
+                activeJobs: 0,
+                totalApplications: 0,
+                pendingApplications: 0,
+                hiredCount: 0
+            }
+        });
     }
 }
 
-// Get company's jobs - UPDATED TO MATCH NEW JOB MODEL
+// Get company's jobs - FIXED VERSION
 const getCompanyJobs = async (req, res) => {
     try {
-        const companyId = req.user._id; // From auth middleware
-        const { limit, page } = req.query;
+        console.log("getCompanyJobs called");
+        console.log("req.user:", req.user);
+        console.log("req.user._id:", req.user._id);
+        console.log("req.role:", req.role);
+        
+        if (!req.user || !req.user._id) {
+            console.log("ERROR: req.user or req.user._id is undefined");
+            return res.status(404).json({ 
+                success: false,
+                message: "COMPANY NOT FOUND - User not authenticated properly",
+                debug: { user: req.user, role: req.role }
+            });
+        }
+        
+        const companyId = req.user._id;
+        
+        console.log("Fetching jobs for company ID:", companyId);
+        console.log("Company name:", req.user.name);
+        
+        // First verify company exists
+        const companyExists = await companyModel.findById(companyId);
+        if (!companyExists) {
+            console.log("ERROR: Company not found in database:", companyId);
+            return res.status(404).json({ 
+                success: false,
+                message: "COMPANY NOT FOUND in database",
+                companyId: companyId
+            });
+        }
+        
+        console.log("Company found in database:", companyExists.name);
         
         let jobs = [];
         try {
+            // Try to find jobs with different queries
             const query = { companyId: companyId };
-            let jobsQuery = jobModel.find(query).sort({ createdAt: -1 });
+            console.log("Query for jobs:", JSON.stringify(query));
             
-            if (limit) {
-                jobsQuery = jobsQuery.limit(parseInt(limit));
-            }
+            jobs = await jobModel.find(query).sort({ createdAt: -1 });
+            console.log("Found jobs count:", jobs.length);
             
-            jobs = await jobsQuery;
+            // Debug: Check if job model has data
+            const totalJobsInDB = await jobModel.countDocuments({});
+            console.log("Total jobs in database:", totalJobsInDB);
+            
         } catch (error) {
-            console.log("Job model not available yet:", error.message);
+            console.error("Job query error:", error.message);
+            return res.status(200).json({ 
+                success: true,
+                count: 0,
+                message: "No jobs found or error querying",
+                jobs: [] 
+            });
         }
         
-        return res.status(200).json({ jobs: jobs });
+        return res.status(200).json({ 
+            success: true,
+            count: jobs.length,
+            company: {
+                id: companyId,
+                name: req.user.name,
+                email: req.user.email
+            },
+            jobs: jobs 
+        });
     } catch (err) {
-        console.error("Error fetching company jobs:", err);
-        return res.status(200).json({ jobs: [] });
+        console.error("Error in getCompanyJobs:", err);
+        return res.status(500).json({ 
+            success: false,
+            message: "Server error fetching jobs",
+            error: err.message,
+            jobs: [] 
+        });
     }
 }
 
-// CREATE JOB - NEW FUNCTION
+// CREATE JOB
 const createJob = async (req, res) => {
   try {
     const {
       title,
       description,
       location,
-      type, // This is jobType from frontend
+      type,
       salary,
       requirements,
       minCGPA,
@@ -215,18 +290,18 @@ const createJob = async (req, res) => {
       department,
     } = req.body;
 
-    // Get company from authenticated user
-    const company = req.user;
+    console.log("Creating job with data:", req.body);
 
-    // Validate required fields
+    const company = req.user;
+    console.log("Company creating job:", company.name, company._id);
+
     if (!title || !description || !location || !type) {
       return res.status(400).json({ 
+        success: false,
         message: "Title, description, location, and job type are required" 
       });
     }
 
-    // Map "type" from frontend to "jobType" for model
-    // Handle enum values for jobType
     let jobType;
     switch(type) {
       case "Full-time":
@@ -239,7 +314,6 @@ const createJob = async (req, res) => {
         jobType = "Full-time";
     }
 
-    // Handle requirements - convert string to array if needed
     let requirementsArray = [];
     if (requirements) {
       if (Array.isArray(requirements)) {
@@ -249,7 +323,33 @@ const createJob = async (req, res) => {
       }
     }
 
-    // Create job
+    let skillsArray = [];
+    if (skills) {
+      if (Array.isArray(skills)) {
+        skillsArray = skills;
+      } else if (typeof skills === 'string') {
+        skillsArray = skills.split(',').map(s => s.trim()).filter(s => s);
+      }
+    }
+
+    let benefitsArray = [];
+    if (benefits) {
+      if (Array.isArray(benefits)) {
+        benefitsArray = benefits;
+      } else if (typeof benefits === 'string') {
+        benefitsArray = benefits.split(',').map(b => b.trim()).filter(b => b);
+      }
+    }
+
+    let eligibleBranchesArray = ["All"];
+    if (eligibleBranches) {
+      if (Array.isArray(eligibleBranches)) {
+        eligibleBranchesArray = eligibleBranches;
+      } else if (typeof eligibleBranches === 'string') {
+        eligibleBranchesArray = [eligibleBranches];
+      }
+    }
+
     const job = new jobModel({
       title,
       description,
@@ -260,45 +360,56 @@ const createJob = async (req, res) => {
       companyName: company.name,
       requirements: requirementsArray,
       minCGPA: minCGPA || 7.0,
-      eligibleBranches: eligibleBranches || ["All"],
-      deadline: deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      eligibleBranches: eligibleBranchesArray,
+      deadline: deadline ? new Date(deadline) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       workMode: workMode || "onsite",
       experienceLevel: experienceLevel || "mid",
       education: education || "bachelors",
-      skills: skills || [],
-      benefits: benefits || [],
+      skills: skillsArray,
+      benefits: benefitsArray,
       department: department || "General",
       status: "active",
     });
 
+    console.log("Saving job to database:", job);
+
     await job.save();
 
-    // Add job to company's jobs array
+    if (!company.jobs) {
+      company.jobs = [];
+    }
     company.jobs.push(job._id);
     await company.save();
 
+    console.log("Job created successfully:", job._id);
+
     res.status(201).json({
+      success: true,
       message: "Job created successfully",
-      job,
+      job: job,
     });
   } catch (error) {
     console.error("Create job error:", error);
     
     if (error.name === "ValidationError") {
       return res.status(400).json({
+        success: false,
         message: "Validation error",
         errors: Object.values(error.errors).map((err) => err.message),
       });
     }
     
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ 
+      success: false,
+      message: "Server error" 
+    });
   }
 };
 
-// Get all applicants for company's jobs - UPDATED FOR YOUR MIDDLEWARE
+// Get all applicants for company's jobs
 const getApplicants = async (req, res) => {
     try {
-        const companyId = req.user._id; // From auth middleware
+        const companyId = req.user._id;
         
         let companyJobs = [];
         try {
@@ -353,14 +464,111 @@ const getApplicants = async (req, res) => {
     }
 }
 
-// Update application status - UPDATED FOR YOUR MIDDLEWARE
+// Get specific job by ID
+const getJobById = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.user._id;
+    
+    const job = await jobModel.findOne({ _id: jobId, companyId: companyId });
+    
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+    
+    return res.status(200).json(job);
+  } catch (err) {
+    console.error("Error fetching job by ID:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Update job
+const updateJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.user._id;
+    const updates = req.body;
+    
+    const job = await jobModel.findOneAndUpdate(
+      { _id: jobId, companyId: companyId },
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+    
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+    
+    return res.status(200).json({ 
+      message: "Job updated successfully", 
+      job 
+    });
+  } catch (err) {
+    console.error("Error updating job:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Delete job
+const deleteJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.user._id;
+    
+    const job = await jobModel.findOneAndDelete({ _id: jobId, companyId: companyId });
+    
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+    
+    await companyModel.findByIdAndUpdate(companyId, {
+      $pull: { jobs: jobId }
+    });
+    
+    return res.status(200).json({ 
+      message: "Job deleted successfully" 
+    });
+  } catch (err) {
+    console.error("Error deleting job:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Update job status
+const updateJobStatus = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.user._id;
+    const { status } = req.body;
+    
+    const job = await jobModel.findOneAndUpdate(
+      { _id: jobId, companyId: companyId },
+      { $set: { status } },
+      { new: true }
+    );
+    
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+    
+    return res.status(200).json({ 
+      message: "Job status updated successfully", 
+      job 
+    });
+  } catch (err) {
+    console.error("Error updating job status:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Update application status
 const updateApplicationStatus = async (req, res) => {
     try {
         const { applicationId } = req.params;
         const { status } = req.body;
-        const companyId = req.user._id; // From auth middleware
+        const companyId = req.user._id;
         
-        // Find the application and verify it belongs to company's job
         const application = await applicationModel.findById(applicationId)
             .populate('jobId');
         
@@ -368,12 +576,10 @@ const updateApplicationStatus = async (req, res) => {
             return res.status(404).json({ message: "Application not found" });
         }
         
-        // Verify the job belongs to the company
         if (application.jobId.companyId.toString() !== companyId.toString()) {
             return res.status(403).json({ message: "Access denied" });
         }
         
-        // Update the application status
         application.status = status;
         await application.save();
         
@@ -387,7 +593,7 @@ const updateApplicationStatus = async (req, res) => {
     }
 }
 
-// Get company by ID - NEW METHOD
+// Get company by ID
 const getCompanyById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -396,7 +602,6 @@ const getCompanyById = async (req, res) => {
             return res.status(404).json({ message: "Company not found" });
         }
 
-        // Return company data without password
         const companyData = {
             _id: company._id,
             name: company.name,
@@ -419,13 +624,12 @@ const getCompanyById = async (req, res) => {
     }
 }
 
-// Update company profile - NEW METHOD
+// Update company profile
 const updateCompanyProfile = async (req, res) => {
     try {
-        const company = req.user; // From auth middleware
+        const company = req.user;
         const updates = req.body;
 
-        // Remove fields that shouldn't be updated
         delete updates.password;
         delete updates.email;
         delete updates._id;
@@ -434,7 +638,6 @@ const updateCompanyProfile = async (req, res) => {
         Object.assign(company, updates);
         const updatedCompany = await company.save();
 
-        // Return updated company data without password
         const companyData = {
             _id: updatedCompany._id,
             name: updatedCompany.name,
@@ -473,5 +676,9 @@ module.exports = {
     getDashboardStats,
     getCompanyById,
     updateCompanyProfile,
-    createJob 
-}
+    createJob,
+    getJobById,
+    updateJob,
+    deleteJob,
+    updateJobStatus
+};
