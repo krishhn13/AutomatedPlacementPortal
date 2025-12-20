@@ -33,39 +33,60 @@ export default function StudentDashboard() {
     fetchProfile()
   }, [])
 
-  if (loading) return <p className="p-8">Loading dashboard...</p>
-  if (!student) return <p className="p-8 text-red-500">Error loading student data</p>
+  if (loading) return <p className="p-6 sm:p-8">Loading dashboard...</p>
+  if (!student)
+    return <p className="p-6 sm:p-8 text-red-500">Error loading student data</p>
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/10">
       <StudentNavbar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {student.name}!</h1>
-          <p className="text-muted-foreground">
+
+      <div className="container mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
+        {/* Header */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+            Welcome back, {student.name}!
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Track your applications and discover new opportunities
           </p>
         </div>
 
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="glass p-1 h-auto">
-            <TabsTrigger value="overview" className="px-6 py-3">
-              <User className="w-4 h-4 mr-2" /> Overview
+          <TabsList className="glass p-1 h-auto flex flex-wrap sm:flex-nowrap gap-1">
+            <TabsTrigger
+              value="overview"
+              className="flex items-center px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base"
+            >
+              <User className="w-4 h-4 mr-2" />
+              Overview
             </TabsTrigger>
-            <TabsTrigger value="jobs" className="px-6 py-3">
-              <Briefcase className="w-4 h-4 mr-2" /> Job Listings
+
+            <TabsTrigger
+              value="jobs"
+              className="flex items-center px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base"
+            >
+              <Briefcase className="w-4 h-4 mr-2" />
+              Job Listings
             </TabsTrigger>
-            <TabsTrigger value="applications" className="px-6 py-3">
-              <FileText className="w-4 h-4 mr-2" /> My Applications
+
+            <TabsTrigger
+              value="applications"
+              className="flex items-center px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              My Applications
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview tab */}
+          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className="lg:col-span-1 space-y-6">
                 <ProfileCard student={student} />
               </div>
+
               <div className="lg:col-span-2 space-y-6">
                 <ResumeUploader student={student} setStudent={setStudent} />
                 <ApplicationTracker />
@@ -73,12 +94,12 @@ export default function StudentDashboard() {
             </div>
           </TabsContent>
 
-          {/* Jobs tab */}
+          {/* Jobs Tab */}
           <TabsContent value="jobs">
             <JobListings />
           </TabsContent>
 
-          {/* Applications tab */}
+          {/* Applications Tab */}
           <TabsContent value="applications">
             <ApplicationTracker detailed />
           </TabsContent>
@@ -87,4 +108,3 @@ export default function StudentDashboard() {
     </div>
   )
 }
-  

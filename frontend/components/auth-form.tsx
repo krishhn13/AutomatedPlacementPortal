@@ -226,17 +226,6 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
         <CardDescription className="text-pretty">{currentRole.description}</CardDescription>
         
         {/* Backend connection test */}
-        <div className="mt-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            onClick={testBackendConnection}
-            className="text-xs"
-          >
-            Test Backend Connection
-          </Button>
-        </div>
       </CardHeader>
 
       <CardContent>
