@@ -43,8 +43,18 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
     e.preventDefault()
     setIsLoading(true)
 
-    const formData = new FormData(e.target as HTMLFormElement)
+    const formElement = e.target as HTMLFormElement
+    const formData = new FormData(formElement)
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
+    // DEBUG: Log all form fields
+    console.log('=== FORM DATA DEBUG ===')
+    const formValues: Record<string, any> = {}
+    for (let [key, value] of formData.entries()) {
+      formValues[key] = value
+      console.log(`${key}: ${value} (type: ${typeof value})`)
+    }
+    console.log('=== END DEBUG ===')
 
     // Base payload for all roles
     const payload: any = {
@@ -57,15 +67,64 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
       payload.name = formData.get("name") as string
       
       if (selectedRole === "student") {
-        payload.phone = formData.get("phone") as string
-        payload.rollNo = formData.get("rollNo") as string
-        payload.branch = formData.get("branch") as string
-        const cgpa = formData.get("cgpa") as string
-        payload.cgpa = cgpa ? parseFloat(cgpa) : undefined
-        const skills = formData.get("skills") as string
-        payload.skills = skills ? skills.split(',').map(skill => skill.trim()) : []
-        const backlogs = formData.get("backlogs") as string
-        payload.backlogs = backlogs ? parseInt(backlogs) : 0
+        // Get ALL student fields explicitly
+        const studentFields = {
+          phone: formData.get("phone"),
+          rollNo: formData.get("rollNo"),
+          branch: formData.get("branch"),
+          year: formData.get("year"), // CRITICAL: Check if this exists
+          location: formData.get("location"),
+          cgpa: formData.get("cgpa"),
+          backlogs: formData.get("backlogs"),
+          skills: formData.get("skills"),
+        }
+
+        console.log('Student fields from form:', studentFields)
+
+        // Check if year field exists and is not empty
+        if (!studentFields.year || studentFields.year.toString().trim() === '') {
+          console.error('Year field is missing or empty:', studentFields.year)
+          toast({
+            title: "Validation Error",
+            description: "Year field is required. Please enter your current year (e.g., 3rd, 4th, or 2024, 2025)",
+            variant: "destructive",
+          })
+          setIsLoading(false)
+          return
+        }
+
+        // Assign all fields
+        payload.phone = studentFields.phone as string
+        payload.rollNo = studentFields.rollNo as string
+        payload.branch = studentFields.branch as string
+        payload.year = studentFields.year.toString().trim() // Convert to string and trim
+        payload.location = studentFields.location as string
+        
+        // Parse numeric values safely
+        if (studentFields.cgpa && studentFields.cgpa.toString().trim() !== '') {
+          const cgpaNum = parseFloat(studentFields.cgpa.toString())
+          if (!isNaN(cgpaNum)) {
+            payload.cgpa = cgpaNum
+          } else {
+            payload.cgpa = 0 // Default value if invalid
+          }
+        } else {
+          payload.cgpa = 0 // Default value if empty
+        }
+        
+        if (studentFields.backlogs && studentFields.backlogs.toString().trim() !== '') {
+          const backlogsNum = parseInt(studentFields.backlogs.toString())
+          if (!isNaN(backlogsNum)) {
+            payload.backlogs = backlogsNum
+          }
+        }
+        
+        if (studentFields.skills && studentFields.skills.toString().trim() !== '') {
+          payload.skills = studentFields.skills.toString()
+            .split(',')
+            .map((skill: string) => skill.trim())
+            .filter((skill: string) => skill !== '')
+        }
       } else if (selectedRole === "company") {
         payload.phone = formData.get("phone") as string
         payload.website = formData.get("website") as string
@@ -78,6 +137,8 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
         payload.department = formData.get("department") as string
       }
     }
+
+    console.log('Final payload being sent:', payload)
 
     try {
       // Correct endpoint construction for your backend
@@ -110,6 +171,7 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
       const data: AuthResponse = await res.json()
 
       if (!res.ok) {
+        console.error('Backend error response:', data)
         throw new Error(data.message || `Authentication failed: ${res.statusText}`)
       }
 
@@ -150,6 +212,8 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
         errorMessage = `The authentication endpoint is not available. Please make sure your backend has the route: /api/${isLogin ? 'login' : 'register'}/${selectedRole}`
       } else if (errorMessage.includes('Failed to fetch')) {
         errorMessage = "Cannot connect to server. Please check if the backend is running on http://localhost:5000"
+      } else if (errorMessage.includes('Students validation failed: year: Path `year` is required')) {
+        errorMessage = "Year field is required for student registration. Please enter your current year."
       }
       
       toast({
@@ -159,31 +223,6 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
       })
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  // Test if backend is running
-  const testBackendConnection = async () => {
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-      const res = await fetch(`${API_BASE_URL}/api/data`)
-      
-      if (res.ok) {
-        const data = await res.json()
-        toast({
-          title: "Backend Connected ✅",
-          description: data.message || "Server is running properly",
-          variant: "default",
-        })
-      } else {
-        throw new Error(`Server returned ${res.status}`)
-      }
-    } catch (err) {
-      toast({
-        title: "Backend Connection Failed ❌",
-        description: "Cannot connect to the server. Please make sure the backend is running on http://localhost:5000",
-        variant: "destructive",
-      })
     }
   }
 
@@ -224,8 +263,6 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
           {isLogin ? "Welcome Back" : "Create Account"}
         </CardTitle>
         <CardDescription className="text-pretty">{currentRole.description}</CardDescription>
-        
-        {/* Backend connection test */}
       </CardHeader>
 
       <CardContent>
@@ -355,7 +392,7 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
                   />
                 </div>
               </div>
-
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="rollNo">Roll Number</Label>
@@ -384,7 +421,33 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cgpa">CGPA</Label>
+                  <Label htmlFor="year">Year *</Label>
+                  <Input 
+                    id="year" 
+                    name="year" 
+                    placeholder="e.g., 3rd or 2024" 
+                    className="glass" 
+                    required 
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input 
+                    id="location" 
+                    name="location" 
+                    placeholder="Enter location" 
+                    className="glass" 
+                    required 
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cgpa">CGPA *</Label>
                   <Input 
                     id="cgpa" 
                     name="cgpa" 
@@ -394,6 +457,7 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
                     max="10" 
                     placeholder="e.g., 8.5" 
                     className="glass" 
+                    required 
                     disabled={isLoading}
                   />
                 </div>
