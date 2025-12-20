@@ -6,10 +6,14 @@ const Admin = require('../models/Admin');
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-// Student Registration
+// Student Registration - CORRECTED
 exports.registerStudent = async (req, res) => {
   try {
-    const { name, email, password, phone, rollNo, branch, cgpa, skills, backlogs } = req.body;
+    // Add 'year' and 'location' to the destructuring
+    const { name, email, password, phone, rollNo, branch, year, location, cgpa, skills, backlogs } = req.body;
+
+    // Debug log to see what's coming in
+    console.log('Student Registration request body:', req.body);
 
     // Check if student already exists
     const existingStudent = await Student.findOne({ email });
@@ -17,10 +21,19 @@ exports.registerStudent = async (req, res) => {
       return res.status(400).json({ message: 'Student already exists with this email' });
     }
 
+    // Validate required fields
+    if (!year) {
+      return res.status(400).json({ message: 'Year field is required' });
+    }
+    
+    if (!location) {
+      return res.status(400).json({ message: 'Location field is required' });
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new student
+    // Create new student - ADD year and location
     const student = new Student({
       name,
       email,
@@ -28,10 +41,14 @@ exports.registerStudent = async (req, res) => {
       phone,
       rollNo,
       branch,
-      cgpa: cgpa || null,
+      year: year.toString().trim(),  // Add this
+      location: location.toString().trim(),  // Add this
+      cgpa: cgpa ? parseFloat(cgpa) : null,
       skills: skills || [],
       backlogs: backlogs || 0,
     });
+
+    console.log('Student object to save:', student);
 
     await student.save();
 
@@ -52,6 +69,11 @@ exports.registerStudent = async (req, res) => {
         phone: student.phone,
         rollNo: student.rollNo,
         branch: student.branch,
+        year: student.year,  // Add this
+        location: student.location,  // Add this
+        cgpa: student.cgpa,
+        skills: student.skills,
+        backlogs: student.backlogs,
         role: 'student'
       }
     });
@@ -63,6 +85,15 @@ exports.registerStudent = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({ 
         message: 'Student with this email or roll number already exists' 
+      });
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        message: 'Validation Error', 
+        errors: messages 
       });
     }
     
@@ -104,6 +135,11 @@ exports.loginStudent = async (req, res) => {
         phone: student.phone,
         rollNo: student.rollNo,
         branch: student.branch,
+        year: student.year,  // Add this
+        location: student.location,  // Add this
+        cgpa: student.cgpa,
+        skills: student.skills,
+        backlogs: student.backlogs,
         role: 'student'
       }
     });
@@ -353,6 +389,8 @@ exports.getCurrentUser = async (req, res) => {
           phone: user.phone,
           rollNo: user.rollNo,
           branch: user.branch,
+          year: user.year,
+          location: user.location,
           cgpa: user.cgpa,
           skills: user.skills,
           backlogs: user.backlogs
@@ -445,7 +483,9 @@ exports.verifyToken = async (req, res) => {
         ...(decoded.role === 'student' && {
           phone: user.phone,
           rollNo: user.rollNo,
-          branch: user.branch
+          branch: user.branch,
+          year: user.year,
+          location: user.location
         }),
         ...(decoded.role === 'company' && {
           phone: user.phone,
