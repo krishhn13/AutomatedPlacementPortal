@@ -13,15 +13,54 @@ import { Bell, Settings, LogOut, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react" // Add these imports
 
 export function StudentNavbar() {
   const router = useRouter()
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null) // Add state
+  const [avatarKey, setAvatarKey] = useState(Date.now()) // Cache-busting key
 
   // 🔑 Sign Out function
   const handleSignOut = () => {
     localStorage.removeItem("token")
     router.push("/")
   }
+
+  // Fetch user profile photo
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const token = localStorage.getItem("token")
+      if (!token) return
+
+      try {
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+        const res = await fetch(`${API_BASE_URL}/api/student/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store' // Prevent caching
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          if (data.profilePhotoUrl) {
+            // Add timestamp to force refresh
+            setProfilePhoto(`${data.profilePhotoUrl}?t=${Date.now()}`)
+            setAvatarKey(Date.now()) // Update key to force component remount
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile photo:", error)
+      }
+    }
+
+    fetchUserProfile()
+    
+    // Set up an interval to refresh the photo periodically
+    const intervalId = setInterval(() => {
+      setAvatarKey(Date.now()) // Update key every 10 seconds
+    }, 10000) // 10 seconds
+
+    return () => clearInterval(intervalId) // Cleanup on unmount
+  }, [])
 
   return (
     <nav className="sticky top-0 z-50 glass-card border-b backdrop-blur-xl">
@@ -61,17 +100,21 @@ export function StudentNavbar() {
                   variant="ghost"
                   className="relative h-8 w-8 rounded-full transition-all duration-200 hover:scale-110"
                 >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src="/diverse-student-profiles.png"
-                      alt="Profile"
+                  <Avatar className="h-8 w-8" key={avatarKey}> {/* Add key prop */}
+                    <AvatarImage 
+                      src={profilePhoto || ""} 
                     />
-                    <AvatarFallback>AS</AvatarFallback>
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="glass-card w-56" align="end">
-                <DropdownMenuItem className="transition-colors duration-200">
+                <DropdownMenuItem 
+                  className="transition-colors duration-200 cursor-pointer"
+                  onClick={() => router.push("/student/profile")}
+                >
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </DropdownMenuItem>

@@ -47,7 +47,22 @@ const studentSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    
+    profilePhoto: {
+      filename: String,
+      path: String,
+      size: Number,
+      mimetype: String,
+      uploadedAt: Date,
+    },
 
+    resume: {
+      filename: String,
+      path: String,
+      size: Number,
+      uploadedAt: Date,
+    },
+    
     location: {
       type: String,
       default: "",
