@@ -167,7 +167,7 @@ const getDashboardStats = async (req, res) => {
     }
 }
 
-// Get company's jobs - UPDATED FOR YOUR MIDDLEWARE
+// Get company's jobs - UPDATED TO MATCH NEW JOB MODEL
 const getCompanyJobs = async (req, res) => {
     try {
         const companyId = req.user._id; // From auth middleware
@@ -193,6 +193,107 @@ const getCompanyJobs = async (req, res) => {
         return res.status(200).json({ jobs: [] });
     }
 }
+
+// CREATE JOB - NEW FUNCTION
+const createJob = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      location,
+      type, // This is jobType from frontend
+      salary,
+      requirements,
+      minCGPA,
+      eligibleBranches,
+      deadline,
+      workMode,
+      experienceLevel,
+      education,
+      skills,
+      benefits,
+      department,
+    } = req.body;
+
+    // Get company from authenticated user
+    const company = req.user;
+
+    // Validate required fields
+    if (!title || !description || !location || !type) {
+      return res.status(400).json({ 
+        message: "Title, description, location, and job type are required" 
+      });
+    }
+
+    // Map "type" from frontend to "jobType" for model
+    // Handle enum values for jobType
+    let jobType;
+    switch(type) {
+      case "Full-time":
+      case "Part-time":
+      case "Contract":
+      case "Internship":
+        jobType = type;
+        break;
+      default:
+        jobType = "Full-time";
+    }
+
+    // Handle requirements - convert string to array if needed
+    let requirementsArray = [];
+    if (requirements) {
+      if (Array.isArray(requirements)) {
+        requirementsArray = requirements;
+      } else if (typeof requirements === 'string') {
+        requirementsArray = requirements.split(',').map(r => r.trim()).filter(r => r);
+      }
+    }
+
+    // Create job
+    const job = new jobModel({
+      title,
+      description,
+      location,
+      jobType: jobType,
+      salary: salary || "Negotiable",
+      companyId: company._id,
+      companyName: company.name,
+      requirements: requirementsArray,
+      minCGPA: minCGPA || 7.0,
+      eligibleBranches: eligibleBranches || ["All"],
+      deadline: deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      workMode: workMode || "onsite",
+      experienceLevel: experienceLevel || "mid",
+      education: education || "bachelors",
+      skills: skills || [],
+      benefits: benefits || [],
+      department: department || "General",
+      status: "active",
+    });
+
+    await job.save();
+
+    // Add job to company's jobs array
+    company.jobs.push(job._id);
+    await company.save();
+
+    res.status(201).json({
+      message: "Job created successfully",
+      job,
+    });
+  } catch (error) {
+    console.error("Create job error:", error);
+    
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Validation error",
+        errors: Object.values(error.errors).map((err) => err.message),
+      });
+    }
+    
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 // Get all applicants for company's jobs - UPDATED FOR YOUR MIDDLEWARE
 const getApplicants = async (req, res) => {
@@ -371,5 +472,6 @@ module.exports = {
     getCompanyProfile,
     getDashboardStats,
     getCompanyById,
-    updateCompanyProfile
+    updateCompanyProfile,
+    createJob 
 }

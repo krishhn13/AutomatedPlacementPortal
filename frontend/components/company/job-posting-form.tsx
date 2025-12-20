@@ -130,61 +130,54 @@ export function JobPostingForm({ company, onClose, onSuccess }: JobPostingFormPr
         throw new Error("No authentication token found")
       }
 
-      // Prepare the job data for API
-      const jobData = {
-        title: formData.title,
-        department: formData.department,
-        jobType: formData.jobType,
-        description: formData.description,
-        location: formData.location,
-        workMode: formData.workMode,
-        salary: formData.minSalary && formData.maxSalary ? 
-          `${formData.salaryCurrency} ${formData.minSalary} - ${formData.maxSalary}` : undefined,
-        minSalary: formData.minSalary ? parseInt(formData.minSalary) : undefined,
-        maxSalary: formData.maxSalary ? parseInt(formData.maxSalary) : undefined,
-        salaryCurrency: formData.salaryCurrency,
-        deadline: formData.deadline || undefined,
-        experienceLevel: formData.experienceLevel,
-        education: formData.education,
-        skills: formData.skills,
-        requirements: formData.requirements,
-        benefits: formData.benefits,
-        status: "active" as const,
-        companyId: company?._id,
-        companyName: company?.name
-      }
+      // Calculate default deadline (30 days from now)
+      const defaultDeadline = new Date()
+      defaultDeadline.setDate(defaultDeadline.getDate() + 30)
+      const formattedDeadline = formData.deadline || defaultDeadline.toISOString().split('T')[0]
 
-      // Try multiple endpoints for job creation
-      const endpoints = [
-        'http://localhost:5000/api/company/jobs',
-        'http://localhost:5000/api/jobs',
-        'http://localhost:5000/api/jobs/create'
-      ]
+      // Prepare the job data for API - MATCH YOUR JOB MODEL STRUCTURE
+     const jobData = {
+  title: formData.title,
+  description: formData.description,
+  location: formData.location,
+  type: formData.jobType, // This will be mapped to jobType in backend
+  salary: formData.minSalary && formData.maxSalary 
+    ? `${formData.minSalary} - ${formData.maxSalary} ${formData.salaryCurrency}`
+    : "Negotiable",
+  requirements: formData.requirements || "",
+  minCGPA: 7.0, // Default value
+  eligibleBranches: ["All"], // Default value
+  deadline: formData.deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  workMode: formData.workMode,
+  experienceLevel: formData.experienceLevel,
+  education: formData.education,
+  skills: formData.skills,
+  benefits: formData.benefits,
+  department: formData.department || "General",
+  status: "active"
+  // Don't send companyId or companyName - backend will add them
+}
 
-      let success = false
+      // Use the correct endpoint - FIXED
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+      const endpoint = `${API_BASE_URL}/api/company/jobs`
 
-      for (const endpoint of endpoints) {
-        try {
-          const res = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(jobData),
-          })
+      console.log("Posting job to:", endpoint)
+      console.log("Job data:", jobData)
 
-          if (res.ok) {
-            success = true
-            break
-          }
-        } catch (error) {
-          console.log(`Endpoint ${endpoint} failed:`, error)
-        }
-      }
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(jobData),
+      })
 
-      if (!success) {
-        throw new Error("Failed to create job on all endpoints")
+      const responseData = await res.json()
+
+      if (!res.ok) {
+        throw new Error(responseData.message || `Failed to create job: ${res.status}`)
       }
 
       toast({
@@ -196,11 +189,11 @@ export function JobPostingForm({ company, onClose, onSuccess }: JobPostingFormPr
       onSuccess()
       onClose()
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error posting job:", error)
       toast({
         title: "Error",
-        description: "Failed to post job. Please try again.",
+        description: error.message || "Failed to post job. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -216,7 +209,7 @@ export function JobPostingForm({ company, onClose, onSuccess }: JobPostingFormPr
 
   const departments = [
     "Engineering", "Product", "Design", "Marketing", "Sales", 
-    "Operations", "Finance", "HR", "Customer Support", "Other"
+    "Operations", "Finance", "HR", "Customer Support", "General"
   ]
 
   const experienceLevels = [
@@ -317,7 +310,7 @@ export function JobPostingForm({ company, onClose, onSuccess }: JobPostingFormPr
                       </SelectTrigger>
                       <SelectContent className="glass-card">
                         {departments.map(dept => (
-                          <SelectItem key={dept} value={dept.toLowerCase()}>{dept}</SelectItem>
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

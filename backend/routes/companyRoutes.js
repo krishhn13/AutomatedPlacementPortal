@@ -6,7 +6,7 @@ const router = express.Router()
 // Public routes
 router.get("/companies", companyController.getAll);
 router.get("/company/:name", companyController.getByName);
-router.get("/companies/:id", companyController.getCompanyById); // New route
+router.get("/companies/:id", companyController.getCompanyById);
 
 // Protected routes (require authentication)
 router.post("/addCompany", companyController.addCompany);
@@ -15,9 +15,11 @@ router.delete("/deleteCompany/:name", authMiddleware, companyController.deleteCo
 
 // DASHBOARD ROUTES - All protected
 router.get("/company/profile/me", authMiddleware, companyController.getCompanyProfile);
-router.put("/company/profile/me", authMiddleware, companyController.updateCompanyProfile); // New route
+router.put("/company/profile/me", authMiddleware, companyController.updateCompanyProfile);
 router.get("/company/dashboard/stats", authMiddleware, companyController.getDashboardStats);
 router.get("/company/jobs", authMiddleware, companyController.getCompanyJobs);
+
+router.post("/company/jobs", authMiddleware, companyController.createJob);
 router.get("/company/applicants", authMiddleware, companyController.getApplicants);
 router.put("/company/applications/:applicationId/status", authMiddleware, companyController.updateApplicationStatus);
 
