@@ -1,410 +1,383 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Building2, Briefcase, Users, Check, X, Eye, Clock } from "lucide-react"
-
-const pendingCompanies = [
-  {
-    id: 1,
-    name: "TechStart Inc.",
-    industry: "Technology",
-    location: "San Francisco, CA",
-    email: "hr@techstart.com",
-    website: "www.techstart.com",
-    submittedDate: "2024-11-30",
-    documents: ["Registration Certificate", "Tax ID", "Company Profile"],
-    logo: "/abstract-startup-logo.png",
-  },
-  {
-    id: 2,
-    name: "InnovateCorp",
-    industry: "Software",
-    location: "Austin, TX",
-    email: "careers@innovatecorp.com",
-    website: "www.innovatecorp.com",
-    submittedDate: "2024-11-29",
-    documents: ["Business License", "Company Profile"],
-    logo: "/abstract-tech-logo.png",
-  },
-]
-
-const pendingJobs = [
-  {
-    id: 1,
-    title: "Senior Software Engineer",
-    company: "TechCorp Inc.",
-    department: "Engineering",
-    location: "Remote",
-    salary: "$100,000 - $150,000",
-    submittedDate: "2024-11-30",
-    description: "We are looking for a senior software engineer to join our team...",
-    requirements: ["5+ years experience", "React", "Node.js"],
-  },
-  {
-    id: 2,
-    title: "Product Manager",
-    company: "StartupXYZ",
-    department: "Product",
-    location: "New York, NY",
-    salary: "$90,000 - $130,000",
-    submittedDate: "2024-11-29",
-    description: "Join our product team to drive innovation and growth...",
-    requirements: ["3+ years PM experience", "Analytics", "Leadership"],
-  },
-]
-
-const pendingStudents = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@university.edu",
-    branch: "Computer Science",
-    year: "Final Year",
-    cgpa: "8.9/10",
-    submittedDate: "2024-11-30",
-    documents: ["ID Card", "Transcript", "Resume"],
-    avatar: "/student-profile.png",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@college.edu",
-    branch: "Electronics",
-    year: "Third Year",
-    cgpa: "9.1/10",
-    submittedDate: "2024-11-29",
-    documents: ["ID Card", "Transcript"],
-    avatar: "/diverse-student-profiles.png",
-  },
-]
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Search,
+  Filter,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Building2,
+  GraduationCap,
+  Shield,
+  Download,
+  User
+} from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export function ApprovalPanel() {
-  const [activeTab, setActiveTab] = useState("companies")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterType, setFilterType] = useState("all")
+  const [activeTab, setActiveTab] = useState("pending")
+  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const handleApprove = (type: string, id: number) => {
-    console.log(`Approving ${type} with id: ${id}`)
-    // Handle approval logic
+  const approvalItems = [
+    {
+      id: 1,
+      type: "company",
+      name: "Tech Innovations Inc.",
+      email: "hr@techinnovations.com",
+      submitted: "2024-01-15",
+      status: "pending",
+      details: "Software development company looking to hire interns"
+    },
+    {
+      id: 2,
+      type: "student",
+      name: "John Doe",
+      email: "john@example.com",
+      submitted: "2024-01-14",
+      status: "pending",
+      details: "Final year CSE student with 8.5 CGPA"
+    },
+    {
+      id: 3,
+      type: "job",
+      name: "Frontend Developer Intern",
+      email: "careers@google.com",
+      submitted: "2024-01-13",
+      status: "pending",
+      details: "6-month internship with stipend"
+    },
+    {
+      id: 4,
+      type: "company",
+      name: "Global Finance Corp",
+      email: "info@globalfinance.com",
+      submitted: "2024-01-12",
+      status: "approved",
+      details: "Financial services company"
+    },
+    {
+      id: 5,
+      type: "student",
+      name: "Jane Smith",
+      email: "jane@example.com",
+      submitted: "2024-01-11",
+      status: "rejected",
+      details: "Profile incomplete"
+    },
+    {
+      id: 6,
+      type: "job",
+      name: "Data Scientist",
+      email: "hr@amazon.com",
+      submitted: "2024-01-10",
+      status: "pending",
+      details: "Full-time position"
+    },
+    {
+      id: 7,
+      type: "company",
+      name: "StartUp Ventures",
+      email: "contact@startup.com",
+      submitted: "2024-01-09",
+      status: "pending",
+      details: "Early-stage startup"
+    },
+    {
+      id: 8,
+      type: "student",
+      name: "Mike Johnson",
+      email: "mike@example.com",
+      submitted: "2024-01-08",
+      status: "approved",
+      details: "MBA graduate"
+    }
+  ]
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" /> Pending</Badge>
+      case "approved":
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="h-3 w-3 mr-1" /> Approved</Badge>
+      case "rejected":
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" /> Rejected</Badge>
+      default:
+        return null
+    }
   }
 
-  const handleReject = (type: string, id: number) => {
-    console.log(`Rejecting ${type} with id: ${id}`)
-    // Handle rejection logic
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "company":
+        return <Building2 className="h-4 w-4" />
+      case "student":
+        return <GraduationCap className="h-4 w-4" />
+      case "job":
+        return <Shield className="h-4 w-4" />
+      default:
+        return <User className="h-4 w-4" />
+    }
   }
+
+  const handleViewDetails = (item: any) => {
+    setSelectedItem(item)
+    setIsDialogOpen(true)
+  }
+
+  const handleApprove = (id: number) => {
+    // API call would go here
+    console.log("Approved item:", id)
+  }
+
+  const handleReject = (id: number) => {
+    // API call would go here
+    console.log("Rejected item:", id)
+  }
+
+  const filteredItems = approvalItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.email.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesType = filterType === "all" || item.type === filterType
+    const matchesTab = activeTab === "all" || item.status === activeTab
+    
+    return matchesSearch && matchesType && matchesTab
+  })
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Companies</p>
-                <p className="text-2xl font-bold">{pendingCompanies.length}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-secondary/10">
-                <Building2 className="w-6 h-6 text-secondary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Jobs</p>
-                <p className="text-2xl font-bold">{pendingJobs.length}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-accent/10">
-                <Briefcase className="w-6 h-6 text-accent" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Students</p>
-                <p className="text-2xl font-bold">{pendingStudents.length}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Approval Management</h2>
+          <p className="text-muted-foreground">Review and manage pending approvals</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </div>
 
+      {/* Filters and Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex gap-4">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="company">Companies</SelectItem>
+                  <SelectItem value="student">Students</SelectItem>
+                  <SelectItem value="job">Job Postings</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="glass">
-          <TabsTrigger
-            value="companies"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <Building2 className="w-4 h-4 mr-2" />
-            Companies ({pendingCompanies.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="jobs"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <Briefcase className="w-4 h-4 mr-2" />
-            Job Postings ({pendingJobs.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="students"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <Users className="w-4 h-4 mr-2" />
-            Students ({pendingStudents.length})
-          </TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full md:w-auto">
+          <TabsTrigger value="all">All Items</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="approved">Approved</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="companies" className="space-y-4">
-          {pendingCompanies.map((company) => (
-            <Card key={company.id} className="glass-card">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                      <Building2 className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{company.name}</CardTitle>
-                      <CardDescription>
-                        {company.industry} • {company.location}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                    <Clock className="w-3 h-3 mr-1" />
-                    Pending
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="space-y-2">
-                    <p className="text-sm">
-                      <span className="font-medium">Email:</span> {company.email}
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-medium">Website:</span> {company.website}
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-medium">Submitted:</span>{" "}
-                      {new Date(company.submittedDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium mb-2">Documents Submitted:</p>
-                    <div className="space-y-1">
-                      {company.documents.map((doc) => (
-                        <div key={doc} className="flex items-center text-sm">
-                          <Check className="w-3 h-3 mr-2 text-accent" />
-                          {doc}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Details
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleApprove("company", company.id)}
-                    className="bg-accent hover:bg-accent/90"
-                  >
-                    <Check className="w-4 h-4 mr-2" />
-                    Approve
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleReject("company", company.id)}
-                    className="text-destructive hover:text-destructive bg-transparent"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Reject
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="jobs" className="space-y-4">
-          {pendingJobs.map((job) => (
-            <Card key={job.id} className="glass-card">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{job.title}</CardTitle>
-                    <CardDescription>
-                      {job.company} • {job.department} • {job.location}
-                    </CardDescription>
-                  </div>
-                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                    <Clock className="w-3 h-3 mr-1" />
-                    Pending
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium mb-2">Job Description:</p>
-                    <p className="text-sm text-muted-foreground">{job.description}</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm">
-                        <span className="font-medium">Salary:</span> {job.salary}
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-medium">Submitted:</span>{" "}
-                        {new Date(job.submittedDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium mb-2">Requirements:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {job.requirements.map((req) => (
-                          <Badge key={req} variant="secondary" className="text-xs">
-                            {req}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Full Details
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleApprove("job", job.id)}
-                      className="bg-accent hover:bg-accent/90"
-                    >
-                      <Check className="w-4 h-4 mr-2" />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleReject("job", job.id)}
-                      className="text-destructive hover:text-destructive bg-transparent"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="students" className="space-y-4">
-          {pendingStudents.map((student) => (
-            <Card key={student.id} className="glass-card">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={student.avatar || "/placeholder.svg"} alt={student.name} />
-                      <AvatarFallback>
-                        {student.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg">{student.name}</CardTitle>
-                      <CardDescription>
-                        {student.branch} • {student.year}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                    <Clock className="w-3 h-3 mr-1" />
-                    Pending
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="space-y-2">
-                    <p className="text-sm">
-                      <span className="font-medium">Email:</span> {student.email}
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-medium">CGPA:</span> {student.cgpa}
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-medium">Submitted:</span>{" "}
-                      {new Date(student.submittedDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium mb-2">Documents Submitted:</p>
-                    <div className="space-y-1">
-                      {student.documents.map((doc) => (
-                        <div key={doc} className="flex items-center text-sm">
-                          <Check className="w-3 h-3 mr-2 text-accent" />
-                          {doc}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Profile
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleApprove("student", student.id)}
-                    className="bg-accent hover:bg-accent/90"
-                  >
-                    <Check className="w-4 h-4 mr-2" />
-                    Approve
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleReject("student", student.id)}
-                    className="text-destructive hover:text-destructive bg-transparent"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Reject
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
       </Tabs>
+
+      {/* Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Submitted</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredItems.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getTypeIcon(item.type)}
+                      <span className="capitalize">{item.type}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell>{item.email}</TableCell>
+                  <TableCell>{item.submitted}</TableCell>
+                  <TableCell>{getStatusBadge(item.status)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDetails(item)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      {item.status === "pending" && (
+                        <>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleApprove(item.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleReject(item.id)}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Dialog for viewing details */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Approval Details</DialogTitle>
+            <DialogDescription>
+              Review details before making a decision
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedItem && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Type</h4>
+                  <p className="capitalize">{selectedItem.type}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
+                  <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Name</h4>
+                  <p>{selectedItem.name}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Email</h4>
+                  <p>{selectedItem.email}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Submitted</h4>
+                  <p>{selectedItem.submitted}</p>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">Details</h4>
+                <p className="mt-1">{selectedItem.details}</p>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg">
+                <h4 className="text-sm font-medium mb-2">Additional Information</h4>
+                <p className="text-sm text-muted-foreground">
+                  This {selectedItem.type} registration requires administrative approval before gaining full access to the platform.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            {selectedItem?.status === "pending" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    handleReject(selectedItem.id)
+                    setIsDialogOpen(false)
+                  }}
+                >
+                  Reject
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleApprove(selectedItem.id)
+                    setIsDialogOpen(false)
+                  }}
+                >
+                  Approve
+                </Button>
+              </>
+            )}
+            <Button
+              variant="secondary"
+              onClick={() => setIsDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
