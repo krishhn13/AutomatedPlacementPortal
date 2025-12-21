@@ -1,34 +1,84 @@
-const express = require('express')
-const companyController = require("../controllers/companyController")
-const authMiddleware = require("../middlewares/authMiddleware")
-const router = express.Router()
+const express = require("express");
+const companyController = require("../controllers/companyController");
+const authMiddleware = require("../middlewares/authMiddleware");
 
-// Public routes
+const router = express.Router();
+
+/* ============================
+   PUBLIC ROUTES
+============================ */
+
+// Get all companies
 router.get("/companies", companyController.getAll);
-router.get("/company/:name", companyController.getByName);
+
+// Get company by ID
 router.get("/companies/:id", companyController.getCompanyById);
 
-// Protected routes (require authentication)
-router.post("/addCompany", companyController.addCompany);
-router.put("/updateCompany/:name", authMiddleware, companyController.updateCompany);
-router.delete("/deleteCompany/:name", authMiddleware, companyController.deleteCompany);
 
-// DASHBOARD ROUTES - All protected
+/* ============================
+   PROTECTED ROUTES (AUTH)
+============================ */
+
+// Add company
+router.post("/addCompany", companyController.addCompany);
+
+// Company dashboard/profile
 router.get("/company/profile/me", authMiddleware, companyController.getCompanyProfile);
 router.put("/company/profile/me", authMiddleware, companyController.updateCompanyProfile);
+
+// Dashboard stats
 router.get("/company/dashboard/stats", authMiddleware, companyController.getDashboardStats);
 
-// JOB ROUTES
-router.get("/company/jobs", authMiddleware, companyController.getCompanyJobs); // Get all company's jobs
-router.post("/company/jobs", authMiddleware, companyController.createJob); // Create new job
 
-// Individual job routes (add these)
-router.get("/company/jobs/:id", authMiddleware, companyController.getJobById); // Get specific job
-router.put("/company/jobs/:id", authMiddleware, companyController.updateJob); // Update job
-router.delete("/company/jobs/:id", authMiddleware, companyController.deleteJob); // Delete job
-router.put("/company/jobs/:id/status", authMiddleware, companyController.updateJobStatus); // Update job status
+/* ============================
+   JOB ROUTES (VERY IMPORTANT: ABOVE :name)
+============================ */
 
+// Get all jobs of logged-in company
+router.get("/company/jobs", authMiddleware, companyController.getCompanyJobs);
+
+// Create job
+router.post("/company/jobs", authMiddleware, companyController.createJob);
+
+// Job by ID
+router.get("/company/jobs/:id", authMiddleware, companyController.getJobById);
+router.put("/company/jobs/:id", authMiddleware, companyController.updateJob);
+router.delete("/company/jobs/:id", authMiddleware, companyController.deleteJob);
+
+// Update job status
+router.put(
+  "/company/jobs/:id/status",
+  authMiddleware,
+  companyController.updateJobStatus
+);
+
+
+/* ============================
+   APPLICATION ROUTES
+============================ */
+
+// Get applicants for company jobs
 router.get("/company/applicants", authMiddleware, companyController.getApplicants);
-router.put("/company/applications/:applicationId/status", authMiddleware, companyController.updateApplicationStatus);
+
+// Update application status
+router.put(
+  "/company/applications/:applicationId/status",
+  authMiddleware,
+  companyController.updateApplicationStatus
+);
+
+
+/* ============================
+   COMPANY NAME ROUTES (KEEP LAST)
+============================ */
+
+
+router.get("/company/:name", companyController.getByName);
+
+// Update company by name
+router.put("/updateCompany/:name", authMiddleware, companyController.updateCompany);
+
+// Delete company by name
+router.delete("/deleteCompany/:name", authMiddleware, companyController.deleteCompany);
 
 module.exports = router;
