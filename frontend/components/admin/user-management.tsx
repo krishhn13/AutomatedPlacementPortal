@@ -204,7 +204,6 @@ const fetchUsers = async () => {
   }
 };
 
-  // Calculate user statistics
   const calculateUserStats = (userList: User[]) => {
     console.log("📊 Calculating stats for", userList.length, "users")
     
