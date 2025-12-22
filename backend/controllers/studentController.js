@@ -123,6 +123,37 @@ const uploadProfilePhoto = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const students = await Students.find().select("-password");
+    const studentList = students.map((student) => {
+      const obj = student.toObject();
+
+      if (obj.profilePhoto && obj.profilePhoto.path) {
+        const ts = obj.profilePhoto.uploadedAt
+          ? new Date(obj.profilePhoto.uploadedAt).getTime()
+          : Date.now();
+        obj.profilePhotoUrl = `${req.protocol}://${req.get("host")}/${obj.profilePhoto.path}?t=${ts}`;
+      }
+
+      if (obj.resume && obj.resume.path) {
+        const ts = obj.resume.uploadedAt
+          ? new Date(obj.resume.uploadedAt).getTime()
+          : Date.now();
+        obj.resumeUrl = `${req.protocol}://${req.get("host")}/${obj.resume.path}?t=${ts}`;
+      }
+
+      return obj;
+    });
+
+    res.status(200).json(studentList);
+  } catch (err) {
+    console.error("Get all users error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+
 /* ---------- DELETE PROFILE PHOTO ---------- */
 const deleteProfilePhoto = async (req, res) => {
   try {
@@ -326,6 +357,7 @@ const getAvailableJobs = async (req, res) => {
 };
 
 module.exports = {
+  getAllUsers,
   getProfile,
   updateProfile,
   uploadProfilePhoto,
