@@ -34,7 +34,7 @@ const getByName = async (req, res) => {
     try {
         const { name } = req.params;
         const isThere = await companyModel.findOne({ name });
-        if (!isThere) return res.status(404).json({ message: "COMPANY NOT FOUND" });
+        if (!isThere) return res.status(404).json({ message: "COMPANY NOT FOUND (Get By Name)" });
         return res.status(200).json({ data: isThere });
     } catch (err) {
         res.status(500).json({message : err.message});

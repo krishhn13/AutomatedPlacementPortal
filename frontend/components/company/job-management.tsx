@@ -67,30 +67,39 @@ useEffect(() => {
 
 const fetchJobs = async () => {
   try {
+    setLoading(true);
+
     const token = localStorage.getItem("token");
-    if (!token) return;
-    
+    if (!token) {
+      setJobs([]);
+      return;
+    }
     const response = await fetch(`${API_BASE_URL}/api/company/jobs`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+    if (!response.ok) {
+      console.error("Failed to fetch jobs:", response.status);
+      setJobs([]);
+      setLoading(false);
+      return;
+    }
     
-    if (response.ok) {
-      const data = await response.json();
-      console.log("JobManagement - Jobs data:", data);
-      
-      // Handle different response formats
-      if (data.jobs) {
-        setJobs(data.jobs);
-      } else if (data.data) {
-        setJobs(data.data);
-      } else if (Array.isArray(data)) {
-        setJobs(data);
-      }
+    const data = await response.json();
+    console.log("JobManagement - Jobs data:", data);
+
+    if (Array.isArray(data.jobs)) {
+      setJobs(data.jobs);
+    } else if (Array.isArray(data.data)) {
+      setJobs(data.data);
+    } else {
+      setJobs([]);
     }
   } catch (error) {
     console.error("Error fetching jobs:", error);
+  } finally {
+    setLoading(false);
   }
 };
   const deleteJob = async (jobId: string) => {

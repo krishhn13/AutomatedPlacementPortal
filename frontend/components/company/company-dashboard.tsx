@@ -36,6 +36,7 @@ interface DashboardStats {
 }
 
 export function CompanyDashboard() {
+  const [jobs, setJobs] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("overview")
   const [showJobForm, setShowJobForm] = useState(false)
   const [company, setCompany] = useState<Company | null>(null)
@@ -74,7 +75,7 @@ export function CompanyDashboard() {
       
       // Fetch dashboard stats
       await fetchDashboardStats(token)
-      
+      await fetchCompanyJobs(token);
       // Debug jobs data after fetching everything
       await debugJobsData(token)
       
@@ -92,6 +93,35 @@ export function CompanyDashboard() {
       setLoading(false)
     }
   }
+
+const fetchCompanyJobs = async (token: string) => {
+  try {
+    const endpoint = `${API_BASE_URL}/api/company/jobs`;
+    console.log("Fetching jobs from:", endpoint);
+
+    const res = await fetch(endpoint, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.error("Failed to fetch jobs:", res.status);
+      setJobs([]);
+      return;
+    }
+
+    const data = await res.json();
+    console.log("Jobs API response:", data);
+
+    // ✅ THIS IS THE FIX
+    setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+  } catch (err) {
+    console.error("Error fetching jobs:", err);
+    setJobs([]);
+  }
+};
+
 
   const fetchCompanyProfile = async (token: string) => {
     try {
@@ -563,6 +593,7 @@ export function CompanyDashboard() {
           <TabsContent value="jobs">
             <JobManagement 
               company={company}
+              jobs={company?.jobs || []}
               onCreateJob={() => setShowJobForm(true)}
               onRefresh={fetchDashboardData}
             />

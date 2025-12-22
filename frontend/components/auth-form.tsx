@@ -22,6 +22,8 @@ interface AuthFormProps {
 interface ApiError {
   message: string
   status?: number
+  error?: string
+  errors?: Record<string, { message: string }>
 }
 
 interface AuthResponse {
@@ -31,6 +33,8 @@ interface AuthResponse {
   company?: any
   admin?: any
   message?: string
+  error?: string
+  errors?: Record<string, { message: string }>
 }
 
 export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
@@ -45,7 +49,20 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
 
     const formElement = e.target as HTMLFormElement
     const formData = new FormData(formElement)
+    
+    // Get API base URL with fallback
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    
+    // Validate API base URL
+    if (!API_BASE_URL) {
+      toast({
+        title: "Configuration Error",
+        description: "API URL is not configured. Please check your environment variables.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+      return
+    }
 
     // DEBUG: Log all form fields
     console.log('=== FORM DATA DEBUG ===')
@@ -135,10 +152,11 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
       } else if (selectedRole === "admin") {
         payload.phone = formData.get("phone") as string
         payload.department = formData.get("department") as string
+        payload.designation = formData.get("designation") as string
       }
     }
 
-    console.log('Final payload being sent:', payload)
+    console.log('Final payload being sent:', JSON.stringify(payload, null, 2))
 
     try {
       // Correct endpoint construction for your backend
@@ -146,6 +164,7 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
       const endpoint = `${API_BASE_URL}/api/${action}/${selectedRole}`
       
       console.log('Making request to:', endpoint)
+      console.log('Payload:', JSON.stringify(payload, null, 2))
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -155,24 +174,41 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
         body: JSON.stringify(payload),
       })
 
-      // Check if response is HTML (error page)
+      console.log('Response status:', res.status, res.statusText)
+      console.log('Response headers:', Object.fromEntries(res.headers.entries()))
+
+      // Check if response is HTML (error page) or malformed
       const contentType = res.headers.get('content-type')
       if (!contentType || !contentType.includes('application/json')) {
         const textResponse = await res.text()
-        console.error('Non-JSON response:', textResponse.substring(0, 200))
+        console.error('Non-JSON response:', textResponse.substring(0, 500))
         
-        if (textResponse.includes('<!DOCTYPE') || textResponse.includes('<html')) {
-          throw new Error(`Endpoint not found (404): ${endpoint}`)
+        // Check if it's an HTML error page
+        if (textResponse.includes('<!DOCTYPE') || textResponse.includes('<html') || textResponse.includes('Internal Server Error')) {
+          throw new Error(`Server returned HTML error page (${res.status}). Check backend routes and server logs.`)
         }
         
-        throw new Error(`Server error: ${res.status} ${res.statusText}`)
+        // If it's not JSON but not HTML either
+        throw new Error(`Server returned non-JSON response (${res.status}): ${res.statusText}`)
       }
 
       const data: AuthResponse = await res.json()
 
       if (!res.ok) {
         console.error('Backend error response:', data)
-        throw new Error(data.message || `Authentication failed: ${res.statusText}`)
+        
+        // Handle different error response formats
+        let errorMessage = data.message || 
+                          data.error || 
+                          `Authentication failed with status ${res.status}`
+        
+        // Check for Mongoose validation errors
+        if (data.errors) {
+          const validationErrors = Object.values(data.errors).map((err: any) => err.message)
+          errorMessage = validationErrors.join(', ')
+        }
+        
+        throw new Error(errorMessage)
       }
 
       // Handle successful authentication
@@ -198,7 +234,7 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
         }, 1000)
 
       } else {
-        throw new Error("No authentication token received")
+        throw new Error("No authentication token received from server")
       }
 
     } catch (err) {
@@ -208,12 +244,14 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
       let errorMessage = error.message || "Something went wrong. Please try again."
       
       // Provide more specific error messages
-      if (errorMessage.includes('Endpoint not found')) {
+      if (errorMessage.includes('Endpoint not found') || errorMessage.includes('Check backend routes')) {
         errorMessage = `The authentication endpoint is not available. Please make sure your backend has the route: /api/${isLogin ? 'login' : 'register'}/${selectedRole}`
-      } else if (errorMessage.includes('Failed to fetch')) {
-        errorMessage = "Cannot connect to server. Please check if the backend is running on http://localhost:5000"
+      } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+        errorMessage = `Cannot connect to server at ${API_BASE_URL}. Please check if the backend is running and accessible.`
       } else if (errorMessage.includes('Students validation failed: year: Path `year` is required')) {
         errorMessage = "Year field is required for student registration. Please enter your current year."
+      } else if (errorMessage.includes('Internal Server Error')) {
+        errorMessage = "Server encountered an internal error. Please check backend logs and try again."
       }
       
       toast({
@@ -594,6 +632,20 @@ export function AuthForm({ defaultRole = "student" }: AuthFormProps) {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="designation">Designation</Label>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    id="designation" 
+                    name="designation" 
+                    placeholder="Enter designation" 
+                    className="pl-10 glass" 
+                    required 
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <div className="relative">

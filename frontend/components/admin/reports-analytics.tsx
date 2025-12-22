@@ -1,292 +1,475 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, TrendingUp, Users, Building2, Briefcase, Target } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import {
-  BarChart,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Calendar,
+  Download,
+  Filter,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Briefcase,
+  DollarSign,
+  Clock,
+  PieChart,
+  BarChart3,
+  LineChart,
+  FileText
+} from "lucide-react"
+import {
+  LineChart as RechartsLineChart,
+  Line,
+  BarChart as RechartsBarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
-  PieChart,
+  PieChart as RechartsPieChart,
   Pie,
   Cell,
-  Area,
   AreaChart,
+  Area
 } from "recharts"
-
-const placementTrends = [
-  { month: "Jan", placements: 45, applications: 234 },
-  { month: "Feb", placements: 52, applications: 267 },
-  { month: "Mar", placements: 48, applications: 298 },
-  { month: "Apr", placements: 61, applications: 312 },
-  { month: "May", placements: 55, applications: 289 },
-  { month: "Jun", placements: 67, applications: 345 },
-  { month: "Jul", placements: 72, applications: 378 },
-  { month: "Aug", placements: 68, applications: 356 },
-  { month: "Sep", placements: 75, applications: 389 },
-  { month: "Oct", placements: 82, applications: 412 },
-  { month: "Nov", placements: 78, applications: 398 },
-  { month: "Dec", placements: 85, applications: 445 },
-]
-
-const branchWiseData = [
-  { branch: "Computer Science", students: 450, placed: 342, percentage: 76 },
-  { branch: "Electronics", students: 320, placed: 234, percentage: 73 },
-  { branch: "Mechanical", students: 280, placed: 189, percentage: 68 },
-  { branch: "Civil", students: 200, placed: 123, percentage: 62 },
-  { branch: "Chemical", students: 150, placed: 89, percentage: 59 },
-]
-
-const companyWiseData = [
-  { name: "TechCorp Inc.", hires: 45, color: "#3b82f6" },
-  { name: "StartupXYZ", hires: 32, color: "#10b981" },
-  { name: "InnovateCorp", hires: 28, color: "#f59e0b" },
-  { name: "DataFlow", hires: 24, color: "#ef4444" },
-  { name: "Others", hires: 67, color: "#8b5cf6" },
-]
-
-const salaryRanges = [
-  { range: "0-3 LPA", count: 45 },
-  { range: "3-6 LPA", count: 123 },
-  { range: "6-10 LPA", count: 89 },
-  { range: "10-15 LPA", count: 56 },
-  { range: "15+ LPA", count: 23 },
-]
+import { DateRange } from "react-day-picker"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { format } from "date-fns"
 
 export function ReportsAnalytics() {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(2024, 0, 1),
+    to: new Date(2024, 11, 31),
+  })
+  const [reportType, setReportType] = useState("overview")
+
+  const monthlyData = [
+    { month: 'Jan', placements: 45, applications: 320, revenue: 45000 },
+    { month: 'Feb', placements: 52, applications: 380, revenue: 52000 },
+    { month: 'Mar', placements: 60, applications: 420, revenue: 60000 },
+    { month: 'Apr', placements: 65, applications: 450, revenue: 65000 },
+    { month: 'May', placements: 70, applications: 500, revenue: 70000 },
+    { month: 'Jun', placements: 78, applications: 520, revenue: 78000 },
+    { month: 'Jul', placements: 85, applications: 580, revenue: 85000 },
+    { month: 'Aug', placements: 90, applications: 620, revenue: 90000 },
+    { month: 'Sep', placements: 95, applications: 680, revenue: 95000 },
+    { month: 'Oct', placements: 100, applications: 720, revenue: 100000 },
+    { month: 'Nov', placements: 110, applications: 780, revenue: 110000 },
+    { month: 'Dec', placements: 120, applications: 850, revenue: 120000 },
+  ]
+
+  const companyPlacements = [
+    { company: 'Google', placements: 45, avgSalary: 15.5 },
+    { company: 'Microsoft', placements: 38, avgSalary: 14.2 },
+    { company: 'Amazon', placements: 32, avgSalary: 13.8 },
+    { company: 'Apple', placements: 28, avgSalary: 16.0 },
+    { company: 'Meta', placements: 25, avgSalary: 15.2 },
+    { company: 'Netflix', placements: 20, avgSalary: 17.5 },
+  ]
+
+  const departmentData = [
+    { department: 'CSE', placements: 120, avgSalary: 12.5 },
+    { department: 'ECE', placements: 95, avgSalary: 10.8 },
+    { department: 'ME', placements: 75, avgSalary: 9.5 },
+    { department: 'CE', placements: 60, avgSalary: 8.8 },
+    { department: 'EE', placements: 50, avgSalary: 9.2 },
+  ]
+
+  const pieData = [
+    { name: 'Full Time', value: 65, color: '#0088FE' },
+    { name: 'Internship', value: 25, color: '#00C49F' },
+    { name: 'Part Time', value: 10, color: '#FFBB28' },
+  ]
+
+  const reports = [
+    { id: 1, name: 'Monthly Placement Report', type: 'PDF', date: '2024-01-15', size: '2.4 MB' },
+    { id: 2, name: 'Student Performance Analysis', type: 'Excel', date: '2024-01-10', size: '1.8 MB' },
+    { id: 3, name: 'Company Engagement Report', type: 'PDF', date: '2024-01-05', size: '3.2 MB' },
+    { id: 4, name: 'Yearly Placement Summary', type: 'PDF', date: '2023-12-30', size: '4.5 MB' },
+    { id: 5, name: 'Department-wise Analysis', type: 'Excel', date: '2023-12-25', size: '1.2 MB' },
+  ]
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
+
+  const handleDownloadReport = (reportId: number) => {
+    console.log("Downloading report:", reportId)
+    // API call to download report
+  }
+
+  const handleGenerateReport = () => {
+    console.log("Generating new report")
+    // API call to generate report
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Reports & Analytics</h2>
-          <p className="text-muted-foreground">Comprehensive insights into placement activities</p>
+          <p className="text-muted-foreground">Generate and analyze placement reports</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Select defaultValue="2024">
-            <SelectTrigger className="w-32 glass">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="glass-card">
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2023">2023</SelectItem>
-              <SelectItem value="2022">2022</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleGenerateReport}>
+            <FileText className="h-4 w-4" />
+            Generate Report
           </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Pick a date range</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarComponent
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
+      </div>
+
+      {/* Report Type Selector */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+        {[
+          { id: 'overview', label: 'Overview', icon: PieChart },
+          { id: 'placements', label: 'Placements', icon: Users },
+          // { id: 'companies', label: 'Companies', icon: Building2 },
+          { id: 'revenue', label: 'Revenue', icon: DollarSign },
+          { id: 'trends', label: 'Trends', icon: TrendingUp },
+          { id: 'reports', label: 'Reports', icon: FileText },
+        ].map((type) => (
+          <Button
+            key={type.id}
+            variant={reportType === type.id ? "default" : "outline"}
+            onClick={() => setReportType(type.id)}
+            className="justify-start"
+          >
+            <type.icon className="h-4 w-4 mr-2" />
+            {type.label}
+          </Button>
+        ))}
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Placements</p>
-                <p className="text-2xl font-bold">782</p>
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  +15% from last year
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Target className="w-6 h-6 text-primary" />
-              </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Placements</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">850</div>
+            <div className="flex items-center text-xs text-green-600">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              <span>+12.5% from last year</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Placement Rate</p>
-                <p className="text-2xl font-bold">68.5%</p>
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  +3.2% from last year
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-accent/10">
-                <Users className="w-6 h-6 text-accent" />
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Salary (LPA)</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12.8</div>
+            <div className="flex items-center text-xs text-green-600">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              <span>+8.2% from last year</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg. Package</p>
-                <p className="text-2xl font-bold">₹6.8L</p>
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  +12% from last year
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-secondary/10">
-                <Briefcase className="w-6 h-6 text-secondary" />
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Companies</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">89</div>
+            <div className="flex items-center text-xs text-green-600">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              <span>+15 new this quarter</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Partner Companies</p>
-                <p className="text-2xl font-bold">89</p>
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  +8 new this year
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-green-500/10">
-                <Building2 className="w-6 h-6 text-green-600" />
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Placement Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">78.5%</div>
+            <div className="flex items-center text-xs text-green-600">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              <span>+5.2% from last year</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Placement Trends */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle>Placement Trends</CardTitle>
-            <CardDescription>Monthly placement and application statistics</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={placementTrends}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Area
-                  type="monotone"
-                  dataKey="applications"
-                  stackId="1"
-                  stroke="hsl(var(--secondary))"
-                  fill="hsl(var(--secondary))"
-                  fillOpacity={0.3}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="placements"
-                  stackId="2"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.8}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Charts Section */}
+      {reportType === 'overview' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Monthly Placements Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Placements</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="placements" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Company-wise Hiring */}
-        <Card className="glass-card">
+            {/* Placement Type Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Placement Type Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={(entry) => `${entry.name}: ${entry.value}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Department-wise Placements */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Department-wise Placements</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart data={departmentData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="department" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="placements" fill="#8884d8" name="Placements" />
+                    <Bar dataKey="avgSalary" fill="#82ca9d" name="Avg Salary (LPA)" />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {reportType === 'companies' && (
+        <Card>
           <CardHeader>
-            <CardTitle>Top Hiring Companies</CardTitle>
-            <CardDescription>Companies with highest number of hires</CardDescription>
+            <CardTitle>Top Companies by Placements</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center mb-4">
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={companyWiseData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="hires"
-                  >
-                    {companyWiseData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
+            <div className="h-96">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsBarChart data={companyPlacements} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis type="category" dataKey="company" width={100} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="placements" fill="#8884d8" name="Placements" />
+                  <Bar dataKey="avgSalary" fill="#82ca9d" name="Avg Salary (LPA)" />
+                </RechartsBarChart>
               </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {companyWiseData.map((company) => (
-                <div key={company.name} className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: company.color }}></div>
-                  <span className="text-sm">{company.name}</span>
-                  <span className="text-sm text-muted-foreground">({company.hires})</span>
+          </CardContent>
+        </Card>
+      )}
+
+      {reportType === 'trends' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Yearly Trends</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-96">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsLineChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="placements" stroke="#8884d8" strokeWidth={2} name="Placements" />
+                  <Line type="monotone" dataKey="applications" stroke="#82ca9d" strokeWidth={2} name="Applications" />
+                  <Line type="monotone" dataKey="revenue" stroke="#ffc658" strokeWidth={2} name="Revenue (₹)" />
+                </RechartsLineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {reportType === 'reports' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Generated Reports</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {reports.map((report) => (
+                <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{report.name}</p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{report.type}</span>
+                        <span>•</span>
+                        <span>{report.date}</span>
+                        <span>•</span>
+                        <span>{report.size}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownloadReport(report.id)}
+                    className="gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download
+                  </Button>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
 
-      {/* Branch-wise Performance */}
-      <Card className="glass-card">
+      {/* Export Controls */}
+      <Card>
         <CardHeader>
-          <CardTitle>Branch-wise Placement Performance</CardTitle>
-          <CardDescription>Detailed breakdown of placements by academic branch</CardDescription>
+          <CardTitle>Export Reports</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {branchWiseData.map((branch) => (
-              <div key={branch.branch} className="p-4 border border-border/50 rounded-lg bg-muted/20">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">{branch.branch}</h4>
-                  <Badge className="bg-accent/10 text-accent border-accent/20">{branch.percentage}% placed</Badge>
-                </div>
-                <div className="grid grid-cols-3 gap-4 text-sm mb-2">
-                  <div>
-                    <span className="text-muted-foreground">Total Students:</span>
-                    <span className="font-medium ml-2">{branch.students}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Placed:</span>
-                    <span className="font-medium ml-2">{branch.placed}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Remaining:</span>
-                    <span className="font-medium ml-2">{branch.students - branch.placed}</span>
-                  </div>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-accent h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${branch.percentage}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Report Type</label>
+              <Select defaultValue="monthly">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select report type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly Report</SelectItem>
+                  <SelectItem value="quarterly">Quarterly Report</SelectItem>
+                  <SelectItem value="yearly">Yearly Report</SelectItem>
+                  <SelectItem value="custom">Custom Report</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Format</label>
+              <Select defaultValue="pdf">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select format" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pdf">PDF</SelectItem>
+                  <SelectItem value="excel">Excel</SelectItem>
+                  <SelectItem value="csv">CSV</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Include Data</label>
+              <Select defaultValue="all">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select data to include" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Data</SelectItem>
+                  <SelectItem value="placements">Placements Only</SelectItem>
+                  <SelectItem value="companies">Companies Only</SelectItem>
+                  <SelectItem value="students">Students Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Salary Distribution */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Salary Distribution</CardTitle>
-          <CardDescription>Distribution of placement packages across different salary ranges</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={salaryRanges} layout="horizontal">
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis type="number" />
-              <YAxis dataKey="range" type="category" width={80} />
-              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          
+          <div className="flex justify-end gap-4 mt-6">
+            <Button variant="outline">
+              Preview
+            </Button>
+            <Button className="gap-2">
+              <Download className="h-4 w-4" />
+              Export Report
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

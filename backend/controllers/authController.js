@@ -252,7 +252,7 @@ exports.loginCompany = async (req, res) => {
 // Admin Registration
 exports.registerAdmin = async (req, res) => {
   try {
-    const { name, email, password, phone, department } = req.body;
+    const { name, email, password, phone, department, designation } = req.body;
 
     const existingAdmin = await Admin.findOne({ email });
     if (existingAdmin) {
@@ -267,6 +267,7 @@ exports.registerAdmin = async (req, res) => {
       password: hashedPassword,
       phone,
       department,
+      designation
     });
 
     await admin.save();
@@ -286,6 +287,7 @@ exports.registerAdmin = async (req, res) => {
         email: admin.email,
         phone: admin.phone,
         department: admin.department,
+        designation : admin.designation,
         role: 'admin'
       }
     });
